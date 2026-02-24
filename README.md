@@ -25,7 +25,7 @@ File_Renamer.bat <video_file> <audio_file> <output_name>
 |---|---|
 | `video_file` | Name of the input video file (with extension) |
 | `audio_file` | Name of the input audio file (with extension) — **must be in the same directory as `video_file`**. The script changes into the video file's directory and looks for the audio file there by name only; passing a file from a different folder will fail. |
-| `output_name` | Desired name for the merged output file — **must use a `.mkv` extension**. The script produces an intermediate file named `frm_<RANDOM>_out.mkv` (e.g. `frm_12345_out.mkv`) and renames it to this value; using a non-`.mkv` extension (e.g. `.mp4`) will produce a file with MKV internals but an incorrect extension. |
+| `output_name` | Desired name for the merged output file — **must use a `.mkv` extension** (plain filename, no path). The script rejects non-`.mkv` extensions before any file operations. The merge always produces a Matroska (MKV) container. |
 
 **Example:**
 ```batch
@@ -34,17 +34,20 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 
 ## What It Does
 
-1. Validates that all three arguments are provided (prints usage and exits if not)
-2. Checks that FFmpeg is installed and available in your PATH
-3. Changes into the directory containing your video file
-4. Verifies both input files exist in that directory
-5. Renames your video and audio files to short randomized temporary names (e.g. `frm_12345_v.mp4`, `frm_12345_a.m4a`) to avoid path length issues
-6. Merges them using FFmpeg into a temporary file named `frm_<RANDOM>_out.mkv` (stream copy — no re-encoding, fast and lossless)
-7. Renames `frm_<RANDOM>_out.mkv` to your specified output name
-8. Deletes the temporary files
-9. Copies the final file to `%USERPROFILE%\Desktop` (your current user's desktop)
+1. Validates that exactly three arguments are provided (prints usage and exits if fewer or more)
+2. Rejects path separators and drive letters in the output name — it must be a plain filename
+3. Requires the output name to use the `.mkv` extension
+4. Checks that FFmpeg is installed and available in your PATH
+5. Changes into the directory containing your video file
+6. Verifies both input files are in the same directory
+7. Verifies both input files exist in that directory
+8. Renames your video and audio files to short randomized temporary names (e.g. `frm_12345_v.mp4`, `frm_12345_a.m4a`) to avoid path length issues
+9. Merges them using FFmpeg into a temporary file named `frm_<RANDOM>_out.mkv` (stream copy — no re-encoding, fast and lossless)
+10. Renames `frm_<RANDOM>_out.mkv` to your specified output name
+11. Deletes the temporary files
+12. Copies the final file to `%USERPROFILE%\Desktop` (your current user's desktop)
 
-If any rename or FFmpeg step fails, the script rolls back all file renames and exits with an error message, leaving your original files intact. The desktop copy (step 9) is a convenience-only step: if it fails the script prints a warning but does **not** roll back — the merged file is already safely present in the input directory.
+If any rename or FFmpeg step fails, the script rolls back all file renames and exits with an error message, leaving your original files intact. The desktop copy (step 12) is a convenience-only step: if it fails the script prints a warning but does **not** roll back — the merged file is already safely present in the input directory.
 
 ## Testing and CI
 
@@ -85,14 +88,17 @@ exit /b 1
 | Input audio file not found | Non-existent second file | `1` |
 | FFmpeg failure | Failure stub | non-zero |
 | Output name contains path separator | e.g. `C:\out\file.mkv` as arg3 | `1` |
+| Non-`.mkv` output extension | e.g. `output.mp4` as arg3 | `1` |
 | Desktop copy fails | Read-only Desktop or missing folder | `0` (warning printed) |
 
 ### Extension Mismatch
 
-Pass a non-`.mkv` output name (e.g. `output.mp4`) to test extension handling:
+The script requires the output name to use the `.mkv` extension. Passing a non-`.mkv` output name (e.g. `output.mp4`) exits with code `1` before any file operations occur. To test this:
 
-- **Current behavior**: The script renames the intermediate `frm_*_out.mkv` to `output.mp4`. The file's internal container remains MKV; only the extension label is wrong.
-- **If extension validation is added**: The script should reject non-`.mkv` extensions with exit code `1` before any file operations occur.
+```batch
+File_Renamer.bat video.mp4 audio.m4a output.mp4
+:: Expected: exit code 1, error message, no files renamed or created
+```
 
 ## Alternative Solutions
 
