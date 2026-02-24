@@ -10,7 +10,13 @@
 :: ── ARGUMENT VALIDATION ──────────────────────────────────────────────────────
 :: Require exactly three arguments: video file, audio file, output name.
 :: %~3 expands arg3 with enclosing quotes stripped; empty string means < 3 args.
+:: %~4 must be empty; a non-empty %~4 means more than three arguments were given.
 if "%~3"=="" (
+    echo Usage: File_Renamer.bat video_file audio_file output_name
+    exit /b 1
+)
+if not "%~4"=="" (
+    echo Error: Too many arguments. Expected exactly three.
     echo Usage: File_Renamer.bat video_file audio_file output_name
     exit /b 1
 )
@@ -37,6 +43,12 @@ if not "%_OUT3::=%"=="%_OUT3%" (
     echo Error: Output name must be a plain filename ^(no drive letter^). Example: "My Video.mkv"
     exit /b 1
 )
+:: The merge always produces a Matroska container; require .mkv now so the
+:: caller gets a clear error before any file operations take place.
+if /i not "%~x3"==".mkv" (
+    echo Error: Output filename must use the .mkv extension. Received: "%~nx3"
+    exit /b 1
+)
 
 :: ── FFMPEG AVAILABILITY CHECK ────────────────────────────────────────────────
 :: Verify FFmpeg is on PATH before any file operations.  A missing binary would
@@ -54,6 +66,21 @@ if %ERRORLEVEL% NEQ 0 (
 pushd "%~dp1"
 IF ERRORLEVEL 1 (
     echo Error: Could not change to directory "%~dp1".
+    exit /b 1
+)
+
+:: ── INPUT DIRECTORY MATCH CHECK ──────────────────────────────────────────────
+:: Both input files must reside in the same directory.  This check runs after
+:: pushd so that relative-path arguments are resolved against the video file's
+:: directory: a bare audio filename (e.g. "audio.m4a") then produces the same
+:: %~dp2 as %~dp1, preventing a false mismatch when the caller mixes an absolute
+:: video path with a relative audio name.  An audio argument that is an absolute
+:: path to a genuinely different directory is still caught correctly.
+if /i not "%~dp1"=="%~dp2" (
+    echo Error: Both input files must be in the same directory.
+    echo   Video directory: "%~dp1"
+    echo   Audio directory: "%~dp2"
+    popd
     exit /b 1
 )
 
@@ -111,7 +138,7 @@ IF ERRORLEVEL 1 (
 :: -c copy         Stream-copy (no re-encoding) — fast and lossless.
 :: -map "0:v:0"    Take the first video stream from the first input file.
 :: -map "1:a:0"    Take the first audio stream from the second input file.
-:: The output container is always Matroska (MKV) regardless of arg3's extension.
+:: The output container is Matroska (MKV); the script requires arg3 to use the .mkv extension and will fail otherwise.
 ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 SET "FFERR=%ERRORLEVEL%"
 IF %FFERR% NEQ 0 (
