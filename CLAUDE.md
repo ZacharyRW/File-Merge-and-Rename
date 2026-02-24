@@ -41,14 +41,14 @@ File-Merge-and-Rename/
 3. Uses ffmpeg to merge video and audio streams
 4. Renames output file to user-specified name
 5. Deletes temporary files
-6. Copies final file to `%USERPROFILE%\Desktop`
+6. Copies final file to the user's Desktop (resolved dynamically at runtime)
 
 **Key lines explained**:
 - Line 10-11: Rename inputs to short temporary names
 - Line 13: FFmpeg merge command with specific stream mapping
 - Line 15: Rename output to desired name
 - Line 17-18: Cleanup temporary files
-- Line 20: Copy to desktop (hardcoded path)
+- Line 20: Copy to the user's Desktop (destination resolved dynamically via `%USERPROFILE%`)
 
 #### README.md
 **Location**: `README.md` (repository root)

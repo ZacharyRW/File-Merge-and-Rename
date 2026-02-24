@@ -17,4 +17,4 @@ RENAME ghi.mkv %3
 del abc
 del def
 
-xcopy /s %3 "%USERPROFILE%\Desktop"
+xcopy /s "%~3" "%USERPROFILE%\Desktop"
