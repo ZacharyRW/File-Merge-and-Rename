@@ -43,6 +43,12 @@ if not "%_OUT3::=%"=="%_OUT3%" (
     echo Error: Output name must be a plain filename ^(no drive letter^). Example: "My Video.mkv"
     exit /b 1
 )
+:: The merge always produces a Matroska container; require .mkv now so the
+:: caller gets a clear error before any file operations take place.
+if /i not "%~x3"==".mkv" (
+    echo Error: Output filename must use the .mkv extension. Received: "%~nx3"
+    exit /b 1
+)
 
 :: ── FFMPEG AVAILABILITY CHECK ────────────────────────────────────────────────
 :: Verify FFmpeg is on PATH before any file operations.  A missing binary would
@@ -143,21 +149,6 @@ IF %FFERR% NEQ 0 (
     echo Error: FFmpeg merge failed.
     popd
     exit /b %FFERR%
-)
-
-:: ── OUTPUT EXTENSION VALIDATION ──────────────────────────────────────────────
-:: The merge always produces a Matroska container (.mkv); any other extension
-:: would give a mismatched container header.  Catch this before the rename so
-:: the user receives a clear diagnostic.  On failure both input files are
-:: restored to their original names and the temp output is deleted, leaving the
-:: input directory exactly as it was before the script ran.
-if /i not "%~x3"==".mkv" (
-    RENAME "%TMPVID%" "%~nx1"
-    RENAME "%TMPAUD%" "%~nx2"
-    if exist "%TMPOUT%" del "%TMPOUT%"
-    echo Error: Output filename must use the .mkv extension. Received: "%~nx3"
-    popd
-    exit /b 1
 )
 
 :: ── RENAME OUTPUT TO DESIRED NAME ────────────────────────────────────────────
