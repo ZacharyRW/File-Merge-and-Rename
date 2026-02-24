@@ -48,14 +48,31 @@
    **Proposed Fix/Task:** Clarify post-merge copy semantics (or update script behavior to match stronger guarantees and then document it).  
    **Reasoning:** Aligns user-facing guarantees with real script outcomes.
 
-9. **Task Type:** Test Improvement  
-   **Description:** Repository has no automated tests for core control-flow paths (success, missing args, missing ffmpeg, rename failures, copy failures).  
-   **Location:** Repository-wide (`README.md`, `File_Renamer.bat`).  
-   **Proposed Fix/Task:** Add a Windows CI job (PowerShell/Pester or batch harness) with mocked `ffmpeg` to cover positive/negative paths and exit codes.  
+9. **Task Type:** Test Improvement
+   **Description:** Repository has no automated tests for core control-flow paths (success, missing args, missing ffmpeg, rename failures, copy failures).
+   **Location:** Repository-wide (`README.md`, `File_Renamer.bat`).
+   **Proposed Fix/Task:** Add a Windows CI job (PowerShell/Pester or batch harness) with mocked `ffmpeg` to cover positive/negative paths and exit codes.
    **Reasoning:** Prevents regressions in a script that manipulates user files.
+   **Testing Prerequisites:** Tests **require a Windows environment** — Command Prompt, PowerShell, or a GitHub Actions `windows-latest` runner. The script cannot be meaningfully tested on Linux or macOS without a compatibility layer.  FFmpeg must be either (a) a real installation or (b) a `ffmpeg.bat` mock stub placed in a directory that appears earlier on `PATH` than any real binary.
+   **Mocked FFmpeg behavior:**
+   - *Success stub*: Create a `ffmpeg.bat` that inspects its argument list, writes a placeholder file to the last positional argument (the output path), then exits `0`. This simulates a successful merge so the rename-output step proceeds normally.
+   - *Failure stub*: Create a `ffmpeg.bat` that exits non-zero (e.g. `exit /b 1`) without creating any output file. This triggers the rollback block and verifies that original filenames are restored and exit code is propagated.
+   **Reproducing positive/negative paths:**
+   - *Positive*: Provide valid video and audio files, place success stub on PATH → expect exit code `0`, output file present, temp files deleted.
+   - *Missing args*: Call script with 0–2 arguments → expect exit code `1` with usage message, no file operations performed.
+   - *FFmpeg absent*: Remove `ffmpeg` from PATH entirely → expect exit code `1` before any rename.
+   - *Input file missing*: Pass a filename that does not exist → expect exit code `1` after `pushd`, before any rename.
+   - *FFmpeg failure*: Place failure stub on PATH → expect non-zero exit, original filenames restored, partial output deleted.
+   - *Desktop copy failure*: Make `%USERPROFILE%\Desktop` read-only or remove it → expect exit code `0` with a warning message (copy failure does not abort or roll back).
 
-10. **Task Type:** Test Improvement  
-    **Description:** No regression tests validate extension mismatch scenarios (e.g., user passes `.mp4` output while stream container remains MKV).  
-    **Location:** Behavior driven by `File_Renamer.bat` lines 13, 47 and documented in `README.md` line 28.  
-    **Proposed Fix/Task:** Add tests that assert explicit rejection (if implemented) or documented warning behavior for non-`.mkv` outputs.  
+10. **Task Type:** Test Improvement
+    **Description:** No regression tests validate extension mismatch scenarios (e.g., user passes `.mp4` output while stream container remains MKV).
+    **Location:** Behavior driven by `File_Renamer.bat` lines 13, 47 and documented in `README.md` line 28.
+    **Proposed Fix/Task:** Add tests that assert explicit rejection (if implemented) or documented warning behavior for non-`.mkv` outputs.
     **Reasoning:** Ensures format-related expectations remain explicit and safe.
+    **Testing Prerequisites:** Same as Task 9 — a **Windows environment** (Command Prompt, PowerShell, or GitHub Actions `windows-latest`) plus either a real FFmpeg installation or a `ffmpeg.bat` mock stub. Use the **success stub** described in Task 9 so the merge step completes and the extension-mismatch behavior can be observed at the rename-output step.
+    **Reproducing extension-mismatch scenarios:**
+    - Call the script with a non-`.mkv` output name, e.g.: `File_Renamer.bat video.mp4 audio.m4a output.mp4`
+    - *Current behavior (no extension check)*: The success stub produces `frm_*_out.mkv`; the rename step renames it to `output.mp4`. The resulting file has a `.mp4` extension but MKV internals. Test should assert exit code `0` and that a file named `output.mp4` exists in the directory.
+    - *Desired behavior (if extension validation is added)*: The script rejects non-`.mkv` extensions before any file operations and exits `1`. Test should assert exit code `1` and that no files were renamed or created.
+    - When implementing: choose one behavior and document it clearly. Both tests should be independent of real FFmpeg by using the mock stub so they remain deterministic in CI.

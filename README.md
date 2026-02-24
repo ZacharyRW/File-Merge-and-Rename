@@ -44,7 +44,55 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 8. Deletes the temporary files
 9. Copies the final file to `%USERPROFILE%\Desktop` (your current user's desktop)
 
-If any step fails, the script rolls back the file renames and exits with an error message, leaving your original files intact.
+If any rename or FFmpeg step fails, the script rolls back all file renames and exits with an error message, leaving your original files intact. The desktop copy (step 9) is a convenience-only step: if it fails the script prints a warning but does **not** roll back — the merged file is already safely present in the input directory.
+
+## Testing and CI
+
+> **Prerequisites:** All tests require a **Windows environment** (Command Prompt, PowerShell, or a GitHub Actions `windows-latest` runner) plus either a real FFmpeg installation or a **mocked `ffmpeg` binary** placed earlier on `PATH` than any real binary. The script cannot be meaningfully tested on Linux or macOS without a Windows compatibility layer.
+
+There are currently no automated tests in the repository. See `REVIEW_TASKS.md` (Tasks 9 and 10) for the full proposed CI plan. The sections below provide enough detail to implement a basic Windows CI job.
+
+### Mocking FFmpeg
+
+Place a `ffmpeg.bat` stub in a temporary directory and prepend that directory to `PATH` before running each test case.
+
+**Success stub** — creates the expected output file and exits `0`, simulating a successful merge:
+
+```batch
+@echo off
+:: Capture the last argument (the output filename) and write a placeholder.
+set "OUTFILE="
+for %%A in (%*) do set "OUTFILE=%%~A"
+echo MOCK_OUTPUT > "%OUTFILE%"
+exit /b 0
+```
+
+**Failure stub** — exits non-zero without creating any output, simulating an FFmpeg error:
+
+```batch
+@echo off
+exit /b 1
+```
+
+### Test Scenarios
+
+| Scenario | Setup | Expected exit code |
+|---|---|---|
+| Valid inputs, FFmpeg succeeds | All args valid, both files present, success stub | `0` |
+| Missing argument(s) | Fewer than 3 args | `1` |
+| FFmpeg not in PATH | No `ffmpeg` on PATH | `1` |
+| Input video file not found | Non-existent first file | `1` |
+| Input audio file not found | Non-existent second file | `1` |
+| FFmpeg failure | Failure stub | non-zero |
+| Output name contains path separator | e.g. `C:\out\file.mkv` as arg3 | `1` |
+| Desktop copy fails | Read-only Desktop or missing folder | `0` (warning printed) |
+
+### Extension Mismatch
+
+Pass a non-`.mkv` output name (e.g. `output.mp4`) to test extension handling:
+
+- **Current behavior**: The script renames the intermediate `frm_*_out.mkv` to `output.mp4`. The file's internal container remains MKV; only the extension label is wrong.
+- **If extension validation is added**: The script should reject non-`.mkv` extensions with exit code `1` before any file operations occur.
 
 ## Alternative Solutions
 
