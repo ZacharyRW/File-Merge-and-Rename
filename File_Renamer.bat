@@ -3,9 +3,22 @@
 :: The second input is the name of the audio file.
 :: The third input is the name you want the resulting combined file to have.
 :: Make sure to end the name with the type of file you want the output to be.
-:: Make sure to have the exstensions at the end of the file name included.
+:: Make sure to have the extensions at the end of the file name included.
 
 @echo off
+
+:: Validate arguments
+if "%~3"=="" (
+    echo Usage: File_Renamer.bat video_file audio_file output_name
+    exit /b 1
+)
+
+:: Check ffmpeg is available
+where ffmpeg >nul 2>nul
+if %ERRORLEVEL% NEQ 0 (
+    echo Error: FFmpeg not found. Please install FFmpeg and add it to your PATH.
+    exit /b 1
+)
 
 SET "TMPBASE=frm_%RANDOM%"
 SET "TMPVID=%TMPBASE%_v%~x1"
@@ -15,6 +28,18 @@ SET "TMPOUT=%TMPBASE%_out.mkv"
 pushd "%~dp1"
 IF ERRORLEVEL 1 (
     echo Error: Could not change to directory "%~dp1".
+    exit /b 1
+)
+
+:: Check input files exist
+if not exist "%~nx1" (
+    echo Error: Video file "%~nx1" not found in "%~dp1".
+    popd
+    exit /b 1
+)
+if not exist "%~nx2" (
+    echo Error: Audio file "%~nx2" not found in "%~dp1".
+    popd
     exit /b 1
 )
 
@@ -54,7 +79,15 @@ IF ERRORLEVEL 1 (
 )
 
 del "%TMPVID%"
+if exist "%TMPVID%" echo Warning: Could not delete temporary file "%TMPVID%".
 del "%TMPAUD%"
+if exist "%TMPAUD%" echo Warning: Could not delete temporary file "%TMPAUD%".
 
 copy "%~nx3" "%USERPROFILE%\Desktop"
+IF ERRORLEVEL 1 (
+    echo Warning: Could not copy "%~nx3" to Desktop. The merged file remains in "%CD%".
+) ELSE (
+    echo Success: "%~nx3" merged and copied to Desktop.
+)
+
 popd
