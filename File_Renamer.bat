@@ -7,14 +7,35 @@
 
 @echo off
 
-RENAME %1 abc
-RENAME %2 def
+SET "TMPBASE=frm_%RANDOM%"
+SET "TMPVID=%TMPBASE%_v"
+SET "TMPAUD=%TMPBASE%_a"
+SET "TMPOUT=%TMPBASE%_out.mkv"
 
-ffmpeg -y -loglevel "repeat+info" -i "abc" -i "def" -c copy -map "0:v:0" -map "1:a:0" "ghi.mkv"
+RENAME "%~1" "%TMPVID%"
+IF ERRORLEVEL 1 (
+    echo Error: Could not rename "%~1".
+    exit /b 1
+)
 
-RENAME ghi.mkv %3
+RENAME "%~2" "%TMPAUD%"
+IF ERRORLEVEL 1 (
+    RENAME "%TMPVID%" "%~1"
+    echo Error: Could not rename "%~2".
+    exit /b 1
+)
 
-del abc
-del def
+ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
+SET "FFERR=%ERRORLEVEL%"
+IF %FFERR% NEQ 0 (
+    RENAME "%TMPVID%" "%~1"
+    RENAME "%TMPAUD%" "%~2"
+    echo Error: FFmpeg merge failed.
+    exit /b %FFERR%
+)
+
+RENAME "%TMPOUT%" "%~3"
+del "%TMPVID%"
+del "%TMPAUD%"
 
 xcopy /s "%~3" "%USERPROFILE%\Desktop"
