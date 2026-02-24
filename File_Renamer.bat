@@ -8,34 +8,46 @@
 @echo off
 
 SET "TMPBASE=frm_%RANDOM%"
-SET "TMPVID=%TMPBASE%_v"
-SET "TMPAUD=%TMPBASE%_a"
+SET "TMPVID=%TMPBASE%_v%~x1"
+SET "TMPAUD=%TMPBASE%_a%~x2"
 SET "TMPOUT=%TMPBASE%_out.mkv"
 
-RENAME "%~1" "%TMPVID%"
+pushd "%~dp1"
+
+RENAME "%~nx1" "%TMPVID%"
 IF ERRORLEVEL 1 (
     echo Error: Could not rename "%~1".
+    popd
     exit /b 1
 )
 
-RENAME "%~2" "%TMPAUD%"
+RENAME "%~nx2" "%TMPAUD%"
 IF ERRORLEVEL 1 (
-    RENAME "%TMPVID%" "%~1"
+    RENAME "%TMPVID%" "%~nx1"
     echo Error: Could not rename "%~2".
+    popd
     exit /b 1
 )
 
 ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 SET "FFERR=%ERRORLEVEL%"
 IF %FFERR% NEQ 0 (
-    RENAME "%TMPVID%" "%~1"
-    RENAME "%TMPAUD%" "%~2"
+    RENAME "%TMPVID%" "%~nx1"
+    RENAME "%TMPAUD%" "%~nx2"
     echo Error: FFmpeg merge failed.
+    popd
     exit /b %FFERR%
 )
 
-RENAME "%TMPOUT%" "%~3"
+RENAME "%TMPOUT%" "%~nx3"
+IF ERRORLEVEL 1 (
+    echo Error: Could not rename output to "%~3".
+    popd
+    exit /b 1
+)
+
 del "%TMPVID%"
 del "%TMPAUD%"
 
-xcopy /s "%~3" "%USERPROFILE%\Desktop"
+copy "%~nx3" "%USERPROFILE%\Desktop"
+popd
