@@ -13,6 +13,10 @@ SET "TMPAUD=%TMPBASE%_a%~x2"
 SET "TMPOUT=%TMPBASE%_out.mkv"
 
 pushd "%~dp1"
+IF ERRORLEVEL 1 (
+    echo Error: Could not change to directory "%~dp1".
+    exit /b 1
+)
 
 RENAME "%~nx1" "%TMPVID%"
 IF ERRORLEVEL 1 (
@@ -32,6 +36,7 @@ IF ERRORLEVEL 1 (
 ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 SET "FFERR=%ERRORLEVEL%"
 IF %FFERR% NEQ 0 (
+    if exist "%TMPOUT%" del "%TMPOUT%"
     RENAME "%TMPVID%" "%~nx1"
     RENAME "%TMPAUD%" "%~nx2"
     echo Error: FFmpeg merge failed.
@@ -41,7 +46,9 @@ IF %FFERR% NEQ 0 (
 
 RENAME "%TMPOUT%" "%~nx3"
 IF ERRORLEVEL 1 (
-    echo Error: Could not rename output to "%~3".
+    RENAME "%TMPVID%" "%~nx1"
+    RENAME "%TMPAUD%" "%~nx2"
+    echo Error: Could not rename output to "%~3". Merged file remains at "%TMPOUT%".
     popd
     exit /b 1
 )
