@@ -17,16 +17,23 @@ if "%~3"=="" (
 
 :: Reject path separators and drive letters in the output name.
 :: arg3 must be a plain filename; the output is always written to the input directory.
-:: Check for backslashes by attempting a string substitution — if the result
-:: differs from the original then a backslash was present.
+:: Each check strips one character class via string substitution; if the result
+:: differs from the original, that character was present in the argument.
+:: Note: %~d3 is NOT used for the drive-letter check because cmd.exe resolves
+:: relative names against the current drive, making %~d3 non-empty even for a
+:: plain filename like "output.mkv" — which would incorrectly reject valid calls.
 set "_OUT3=%~3"
 if not "%_OUT3:\=%"=="%_OUT3%" (
     echo Error: Output name must be a plain filename ^(no backslashes^). Example: "My Video.mkv"
     exit /b 1
 )
-:: %~d3 expands to the drive letter of arg3 (e.g. "C:"); non-empty means a
-:: full or rooted path was supplied rather than a plain filename.
-if not "%~d3"=="" (
+if not "%_OUT3:/=%"=="%_OUT3%" (
+    echo Error: Output name must be a plain filename ^(no forward slashes^). Example: "My Video.mkv"
+    exit /b 1
+)
+:: Colons are invalid in Windows filenames and only appear in drive specifiers
+:: such as "C:file.mkv" or "C:\path\file.mkv" (the latter is also caught above).
+if not "%_OUT3::=%"=="%_OUT3%" (
     echo Error: Output name must be a plain filename ^(no drive letter^). Example: "My Video.mkv"
     exit /b 1
 )
