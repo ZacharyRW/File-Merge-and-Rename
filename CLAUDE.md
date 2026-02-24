@@ -34,21 +34,28 @@ File-Merge-and-Rename/
 
 **How it works**:
 1. Accepts 3 command-line arguments:
-   - `%1`: Video file name (with extension)
-   - `%2`: Audio file name (with extension)
+   - `%1`: Video file path (with extension)
+   - `%2`: Audio file path (with extension)
    - `%3`: Desired output file name (with extension)
-2. Renames input files to temporary names (`abc`, `def`) to avoid path length issues
-3. Uses ffmpeg to merge video and audio streams
-4. Renames output file to user-specified name
-5. Deletes temporary files
-6. Copies final file to the user's Desktop (resolved dynamically at runtime)
+2. Changes into the directory of the video file using `pushd`
+3. Generates randomized temporary names using `%RANDOM%` to avoid path length issues (e.g. `frm_12345_v.mp4`)
+4. Renames input files to temporary names; rolls back and exits on failure
+5. Uses ffmpeg to merge video and audio streams; rolls back renames and exits on failure
+6. Renames output file to user-specified name; rolls back on failure
+7. Deletes temporary input files
+8. Copies final file to `%USERPROFILE%\Desktop` and restores directory with `popd`
 
 **Key lines explained**:
-- Line 10-11: Rename inputs to short temporary names
-- Line 13: FFmpeg merge command with specific stream mapping
-- Line 15: Rename output to desired name
-- Line 17-18: Cleanup temporary files
-- Line 20: Copy to the user's Desktop (destination resolved dynamically via `%USERPROFILE%`)
+- Lines 10-13: Set randomized temporary variable names for video, audio, and output
+- Line 15: `pushd` to the video file's directory
+- Lines 21-34: Rename inputs to temp names (with error handling and rollback)
+- Line 36: FFmpeg merge command with specific stream mapping
+- Lines 38-45: FFmpeg error handling — restores original filenames, deletes partial output
+- Line 47: Rename output to desired name
+- Lines 48-54: Output rename error handling with rollback
+- Lines 56-57: Delete temporary input files
+- Line 59: Copy to desktop via `%USERPROFILE%\Desktop`
+- Line 60: `popd` to restore original directory
 
 #### README.md
 **Location**: `README.md` (repository root)
@@ -73,7 +80,7 @@ File-Merge-and-Rename/
 ## Development Workflow
 
 ### Git Branch Information
-- **Development Branch**: `claude/update-docs-ms5gg`
+- **Development Branch**: `claude/update-docs-pLS7L`
 - **Main Branch**: `master`
 
 ### Making Changes
@@ -97,14 +104,14 @@ File-Merge-and-Rename/
 - Comments use `::` prefix
 
 ### Naming Conventions
-- Temporary files: Short names (`abc`, `def`, `ghi.mkv`)
+- Temporary files: Randomized names using `%RANDOM%` (e.g. `frm_12345_v.mp4`, `frm_12345_a.m4a`, `frm_12345_out.mkv`)
 - Final files: User-specified names with extensions
 
 ### Security Considerations
 
 #### Output Path
-- **Line 20**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
-- **Note**: To change the destination, edit line 20 of `File_Renamer.bat`
+- **Line 59**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
+- **Note**: To change the destination, edit line 59 of `File_Renamer.bat`
 - **Enhancement**: Consider accepting an optional 4th argument for a custom output directory
 
 #### Input Validation
@@ -169,18 +176,18 @@ When updating documentation:
 ## FFmpeg Command Breakdown
 
 ```batch
-ffmpeg -y -loglevel "repeat+info" -i "abc" -i "def" -c copy -map "0:v:0" -map "1:a:0" "ghi.mkv"
+ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 ```
 
 **Flags explained**:
 - `-y`: Overwrite output file without prompting
 - `-loglevel "repeat+info"`: Set logging verbosity
-- `-i "abc"`: First input (video file)
-- `-i "def"`: Second input (audio file)
+- `-i "%TMPVID%"`: First input (randomized temp video file)
+- `-i "%TMPAUD%"`: Second input (randomized temp audio file)
 - `-c copy`: Copy streams without re-encoding (fast)
 - `-map "0:v:0"`: Map first video stream from first input
 - `-map "1:a:0"`: Map first audio stream from second input
-- `"ghi.mkv"`: Output file (Matroska container)
+- `"%TMPOUT%"`: Output file (Matroska container, e.g. `frm_12345_out.mkv`)
 
 **Why this approach**:
 - Stream copy (`-c copy`) avoids re-encoding (preserves quality, very fast)
@@ -190,8 +197,8 @@ ffmpeg -y -loglevel "repeat+info" -i "abc" -i "def" -c copy -map "0:v:0" -map "1
 ## Potential Issues and Solutions
 
 ### Issue: Script fails on other users' systems
-**Cause**: Hardcoded desktop path (line 20)
-**Solution**: Use `%USERPROFILE%\Desktop` or accept output directory as parameter
+**Status**: Already resolved — line 59 uses `%USERPROFILE%\Desktop`, which resolves dynamically per user
+**Enhancement**: Accept an optional 4th argument for a configurable output directory
 
 ### Issue: Files with spaces in names
 **Cause**: Unquoted variables
@@ -249,10 +256,10 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 ## Technical Debt and Improvement Opportunities
 
 ### Current Limitations
-1. **No error handling**: Script continues even if operations fail
-2. **Hardcoded paths**: Desktop location specific to one user
-3. **No input validation**: Assumes correct usage
-4. **No logging**: Difficult to debug failures
+1. **Partial input validation**: Checks for rename/ffmpeg failures but does not validate argument count or file existence upfront
+2. **Fixed output directory**: Desktop destination is not configurable via arguments
+3. **No ffmpeg pre-check**: Script fails mid-operation if ffmpeg is missing, rather than failing fast at startup
+4. **No logging**: Difficult to debug failures beyond printed error messages
 5. **Platform-locked**: Windows-only solution
 
 ### Recommended Enhancements (Priority Order)
@@ -292,9 +299,9 @@ All core functionality and documentation complete and user-ready.
 
 ### Why This Tool Exists
 Windows has a maximum path length of 260 characters (MAX_PATH). When YouTube-DL downloads videos with long titles or is run from deep directory structures, the combined path can exceed this limit. FFmpeg can't access files with paths exceeding this limit, causing merge operations to fail. This script works around the issue by:
-1. Using very short temporary names (3 characters)
-2. Operating in the current directory (shorter path)
-3. Manually triggering the merge operation
+1. Using short randomized temporary names instead of the original long filenames
+2. Operating directly in the video file's directory (shorter path)
+3. Manually triggering the merge operation with full error handling and rollback
 
 ### User Workflow
 1. User downloads video with YouTube-DL
@@ -312,6 +319,6 @@ Windows has a maximum path length of 260 characters (MAX_PATH). When YouTube-DL 
 
 ---
 
-**Last Updated**: 2026-02-24
+**Last Updated**: 2026-02-24 (docs sync with current script)
 **For**: AI assistants working with File-Merge-and-Rename repository
 **Maintained By**: Claude AI sessions working on this codebase
