@@ -34,13 +34,14 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 
 ## What It Does
 
-1. Renames your video and audio files to short temporary names (`abc`, `def`) to avoid path length issues
-2. Merges them using FFmpeg (stream copy — no re-encoding, fast and lossless)
-3. Renames the output to your specified name
-4. Deletes the temporary files
-5. Copies the final file to `C:\Users\<username>\Desktop`
+1. Changes into the directory containing your video file
+2. Renames your video and audio files to short randomized temporary names (e.g. `frm_12345_v.mp4`, `frm_12345_a.m4a`) to avoid path length issues
+3. Merges them using FFmpeg (stream copy — no re-encoding, fast and lossless)
+4. Renames the merged output to your specified name
+5. Deletes the temporary files
+6. Copies the final file to `%USERPROFILE%\Desktop` (your current user's desktop)
 
-> **Note:** The desktop copy path is hardcoded to a specific user account. Edit line 20 of the script and replace the path with `%USERPROFILE%\Desktop` for portability across user accounts.
+If any step fails, the script rolls back the file renames and exits with an error message, leaving your original files intact.
 
 ## Alternative Solutions
 
