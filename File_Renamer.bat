@@ -138,7 +138,7 @@ IF ERRORLEVEL 1 (
 :: -c copy         Stream-copy (no re-encoding) — fast and lossless.
 :: -map "0:v:0"    Take the first video stream from the first input file.
 :: -map "1:a:0"    Take the first audio stream from the second input file.
-:: The output container is always Matroska (MKV) regardless of arg3's extension.
+:: The output container is Matroska (MKV); the script requires arg3 to use the .mkv extension and will fail otherwise.
 ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 SET "FFERR=%ERRORLEVEL%"
 IF %FFERR% NEQ 0 (
