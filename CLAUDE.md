@@ -28,7 +28,7 @@ File-Merge-and-Rename/
 ### File Descriptions
 
 #### File_Renamer.bat
-**Location**: `/home/user/File-Merge-and-Rename/File_Renamer.bat`
+**Location**: `File_Renamer.bat` (repository root)
 **Type**: Windows Batch Script
 **Purpose**: Merges video and audio files using ffmpeg
 
@@ -41,21 +41,21 @@ File-Merge-and-Rename/
 3. Uses ffmpeg to merge video and audio streams
 4. Renames output file to user-specified name
 5. Deletes temporary files
-6. Copies final file to `C:\Users\zacha\Desktop`
+6. Copies final file to the user's Desktop (resolved dynamically at runtime)
 
 **Key lines explained**:
 - Line 10-11: Rename inputs to short temporary names
 - Line 13: FFmpeg merge command with specific stream mapping
 - Line 15: Rename output to desired name
 - Line 17-18: Cleanup temporary files
-- Line 20: Copy to desktop (hardcoded path)
+- Line 20: Copy to the user's Desktop (destination resolved dynamically via `%USERPROFILE%`)
 
 #### README.md
-**Location**: `/home/user/File-Merge-and-Rename/README.md`
-**Purpose**: Minimal project description for repository visitors
+**Location**: `README.md` (repository root)
+**Purpose**: Full usage guide covering the problem statement, requirements (Windows + FFmpeg), command-line usage with argument descriptions and examples, step-by-step explanation of script behavior, and alternative solutions
 
 #### LICENSE
-**Location**: `/home/user/File-Merge-and-Rename/LICENSE`
+**Location**: `LICENSE` (repository root)
 **Purpose**: Full text of GNU General Public License v3.0
 
 ## Dependencies
@@ -73,8 +73,8 @@ File-Merge-and-Rename/
 ## Development Workflow
 
 ### Git Branch Information
-- **Development Branch**: `claude/claude-md-mi6ahgst8mj03zpg-01EX52VRnmWgrD9RUF2C9j5F`
-- **Main Branch**: (not specified - check with user if needed)
+- **Development Branch**: `claude/update-docs-ms5gg`
+- **Main Branch**: `master`
 
 ### Making Changes
 1. Develop on the specified claude/* branch
@@ -102,10 +102,10 @@ File-Merge-and-Rename/
 
 ### Security Considerations
 
-#### Hardcoded Paths
-- **Line 20**: Desktop path is hardcoded to `C:\Users\zacha\Desktop`
-- **Risk**: Will fail on other users' systems
-- **Recommendation**: Consider making this configurable or using `%USERPROFILE%\Desktop`
+#### Output Path
+- **Line 20**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
+- **Note**: To change the destination, edit line 20 of `File_Renamer.bat`
+- **Enhancement**: Consider accepting an optional 4th argument for a custom output directory
 
 #### Input Validation
 - **Current State**: No input validation on arguments
@@ -268,9 +268,13 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 ## Version Control Notes
 
 ### Current State
-- Clean working directory
-- On development branch: `claude/claude-md-mi6ahgst8mj03zpg-01EX52VRnmWgrD9RUF2C9j5F`
-- Recent commits show initial repository setup
+Repository contains:
+- **File_Renamer.bat**: Main Windows batch utility script for merging video/audio files
+- **README.md**: User-facing documentation with problem statement, requirements, usage examples, and alternatives
+- **CLAUDE.md**: Technical guide for AI assistants working with this repository
+- **LICENSE**: GNU General Public License v3.0
+
+All core functionality and documentation complete and user-ready.
 
 ### When Committing Changes
 - Use descriptive commit messages
@@ -308,6 +312,6 @@ Windows has a maximum path length of 260 characters (MAX_PATH). When YouTube-DL 
 
 ---
 
-**Last Updated**: 2025-11-19
+**Last Updated**: 2026-02-24
 **For**: AI assistants working with File-Merge-and-Rename repository
 **Maintained By**: Claude AI sessions working on this codebase

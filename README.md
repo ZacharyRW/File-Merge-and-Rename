@@ -1,2 +1,52 @@
 # File-Merge-and-Rename
-Used to merge and rename files created from YouTube-DL that didn't merge due to PATH length limits
+
+A Windows batch script utility to merge and rename video/audio files downloaded by YouTube-DL that failed to merge due to Windows PATH length limitations.
+
+## Problem
+
+YouTube-DL sometimes downloads video and audio as separate files and merges them automatically. When file paths exceed Windows' 260-character MAX_PATH limit (common with long video titles or deep directory structures), the automatic merge fails. This script provides a manual workaround.
+
+## Requirements
+
+- **Windows** (batch script, Windows-only)
+- **FFmpeg** installed and available in system PATH
+
+## Usage
+
+Navigate to the directory containing your separate video and audio files, then run:
+
+```batch
+File_Renamer.bat <video_file> <audio_file> <output_name>
+```
+
+**Arguments:**
+
+| Argument | Description |
+|---|---|
+| `video_file` | Name of the input video file (with extension) |
+| `audio_file` | Name of the input audio file (with extension) |
+| `output_name` | Desired name for the merged output file — **must use a `.mkv` extension**. The script produces an intermediate `ghi.mkv` and renames it to this value; using a non-`.mkv` extension (e.g. `.mp4`) will produce a file with MKV internals but an incorrect extension. |
+
+**Example:**
+```batch
+File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
+```
+
+## What It Does
+
+1. Renames your video and audio files to short temporary names (`abc`, `def`) to avoid path length issues
+2. Merges them using FFmpeg (stream copy — no re-encoding, fast and lossless)
+3. Renames the output to your specified name
+4. Deletes the temporary files
+5. Copies the final file to `C:\Users\<username>\Desktop`
+
+> **Note:** The desktop copy path is hardcoded to a specific user account. Edit line 20 of the script and replace the path with `%USERPROFILE%\Desktop` for portability across user accounts.
+
+## Alternative Solutions
+
+- **Enable long path support**: Windows 10 (1607+) supports paths beyond 260 characters via a registry setting or Group Policy
+- **Use yt-dlp**: A modern YouTube-DL fork that handles path length issues more gracefully
+
+## License
+
+GNU General Public License v3.0 — see [LICENSE](LICENSE) for details.
