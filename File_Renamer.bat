@@ -10,7 +10,13 @@
 :: ── ARGUMENT VALIDATION ──────────────────────────────────────────────────────
 :: Require exactly three arguments: video file, audio file, output name.
 :: %~3 expands arg3 with enclosing quotes stripped; empty string means < 3 args.
+:: %~4 must be empty; a non-empty %~4 means more than three arguments were given.
 if "%~3"=="" (
+    echo Usage: File_Renamer.bat video_file audio_file output_name
+    exit /b 1
+)
+if not "%~4"=="" (
+    echo Error: Too many arguments. Expected exactly three.
     echo Usage: File_Renamer.bat video_file audio_file output_name
     exit /b 1
 )
@@ -44,6 +50,19 @@ if not "%_OUT3::=%"=="%_OUT3%" (
 where ffmpeg >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
     echo Error: FFmpeg not found. Please install FFmpeg and add it to your PATH.
+    exit /b 1
+)
+
+:: ── INPUT DIRECTORY MATCH CHECK ──────────────────────────────────────────────
+:: Both input files must reside in the same directory.  After pushd the script
+:: addresses the audio file by its bare name inside the video file's directory;
+:: if the two files are in different directories that bare-name lookup will fail.
+:: %~dp1 / %~dp2 each expand to drive+path with a trailing backslash, so a
+:: case-insensitive string comparison reliably detects a mismatch on any volume.
+if /i not "%~dp1"=="%~dp2" (
+    echo Error: Both input files must be in the same directory.
+    echo   Video directory: "%~dp1"
+    echo   Audio directory: "%~dp2"
     exit /b 1
 )
 
@@ -122,6 +141,21 @@ IF %FFERR% NEQ 0 (
     echo Error: FFmpeg merge failed.
     popd
     exit /b %FFERR%
+)
+
+:: ── OUTPUT EXTENSION VALIDATION ──────────────────────────────────────────────
+:: The merge always produces a Matroska container (.mkv); any other extension
+:: would give a mismatched container header.  Catch this before the rename so
+:: the user receives a clear diagnostic.  On failure both input files are
+:: restored to their original names and the temp output is deleted, leaving the
+:: input directory exactly as it was before the script ran.
+if /i not "%~x3"==".mkv" (
+    RENAME "%TMPVID%" "%~nx1"
+    RENAME "%TMPAUD%" "%~nx2"
+    if exist "%TMPOUT%" del "%TMPOUT%"
+    echo Error: Output filename must use the .mkv extension. Received: "%~nx3"
+    popd
+    exit /b 1
 )
 
 :: ── RENAME OUTPUT TO DESIRED NAME ────────────────────────────────────────────
