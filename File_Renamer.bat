@@ -53,19 +53,6 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-:: ── INPUT DIRECTORY MATCH CHECK ──────────────────────────────────────────────
-:: Both input files must reside in the same directory.  After pushd the script
-:: addresses the audio file by its bare name inside the video file's directory;
-:: if the two files are in different directories that bare-name lookup will fail.
-:: %~dp1 / %~dp2 each expand to drive+path with a trailing backslash, so a
-:: case-insensitive string comparison reliably detects a mismatch on any volume.
-if /i not "%~dp1"=="%~dp2" (
-    echo Error: Both input files must be in the same directory.
-    echo   Video directory: "%~dp1"
-    echo   Audio directory: "%~dp2"
-    exit /b 1
-)
-
 :: ── CHANGE TO INPUT DIRECTORY ────────────────────────────────────────────────
 :: All file operations run in the video file's own directory to keep paths short.
 :: pushd / popd track the original directory so it is restored on every exit path.
@@ -73,6 +60,21 @@ if /i not "%~dp1"=="%~dp2" (
 pushd "%~dp1"
 IF ERRORLEVEL 1 (
     echo Error: Could not change to directory "%~dp1".
+    exit /b 1
+)
+
+:: ── INPUT DIRECTORY MATCH CHECK ──────────────────────────────────────────────
+:: Both input files must reside in the same directory.  This check runs after
+:: pushd so that relative-path arguments are resolved against the video file's
+:: directory: a bare audio filename (e.g. "audio.m4a") then produces the same
+:: %~dp2 as %~dp1, preventing a false mismatch when the caller mixes an absolute
+:: video path with a relative audio name.  An audio argument that is an absolute
+:: path to a genuinely different directory is still caught correctly.
+if /i not "%~dp1"=="%~dp2" (
+    echo Error: Both input files must be in the same directory.
+    echo   Video directory: "%~dp1"
+    echo   Audio directory: "%~dp2"
+    popd
     exit /b 1
 )
 
