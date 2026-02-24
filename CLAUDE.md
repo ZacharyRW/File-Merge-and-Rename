@@ -135,7 +135,13 @@ File-Merge-and-Rename/
 - **Remaining Risks**:
   - Special characters in filenames (e.g. `&`, `%`, `!`, `)`) may break commands
 - **Recommendations**:
-  - Escape special characters or use `setlocal enabledelayedexpansion` for safer variable expansion
+  - Escape special characters where possible. **Caution with delayed expansion:** `setlocal enabledelayedexpansion` allows `!var!` syntax, which protects against poison characters like `&` and `)` inside variables — but it also silently strips every literal `!` from filenames (e.g. `Great Video!.mkv` becomes `Great Video.mkv`). The safe pattern is to keep delayed expansion **disabled** by default (use `%var%` to preserve `!` in values) and only toggle it on around the specific comparison or block that needs it, then immediately disable it afterward:
+    ```batch
+    :: Safe pattern: enable delayed expansion only for the critical operation
+    setlocal enabledelayedexpansion
+    if /i not "!_DIR1!"=="!_DIR2!" ( ... )
+    endlocal
+    ```
 
 #### Command Injection
 - **Risk**: Batch scripts are vulnerable to command injection via filenames

@@ -57,9 +57,13 @@ stay valid.
 
 **Location:** `File_Renamer.bat` line 187 (end of script).
 
-**Proposed Fix:** Add `exit /b 0` after `popd` on line 187 to guarantee a zero exit code on the success path.
+**Proposed Fix:** Replace the bare `popd` with a conditional pattern that returns zero only when `popd` itself succeeds, and propagates the failure otherwise:
+```batch
+popd && exit /b 0 || exit /b 1
+```
+This avoids an unconditional `exit /b 0` that would mask a `popd` failure (e.g., if the pushed directory was removed), while still guaranteeing a deterministic zero exit code on the normal success path.
 
-**Reasoning:** Makes the success exit code deterministic rather than relying on the side-effect of `popd`. Particularly important if CI tests check exit codes.
+**Reasoning:** Makes the success exit code deterministic rather than relying on the side-effect of `popd`, without silently swallowing `popd` failures. Particularly important if CI tests check exit codes.
 
 ---
 
