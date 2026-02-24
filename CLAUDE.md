@@ -21,6 +21,7 @@ YouTube-DL sometimes downloads video and audio as separate files. When the file 
 File-Merge-and-Rename/
 ├── File_Renamer.bat    # Main batch script for merging files
 ├── README.md           # Basic project description
+├── REVIEW_TASKS.md     # Code review findings and open tasks
 ├── LICENSE             # GNU GPL v3.0 license text
 └── CLAUDE.md           # This file - AI assistant guide
 ```
@@ -36,32 +37,37 @@ File-Merge-and-Rename/
 1. Accepts 3 command-line arguments:
    - `%1`: Video file path (with extension)
    - `%2`: Audio file path (with extension)
-   - `%3`: Desired output file name (with extension)
-2. Validates that all three arguments are provided; prints usage and exits if not
-3. Checks that FFmpeg is installed and available in PATH; exits with a descriptive error if not
-4. Changes into the directory of the video file using `pushd`
-5. Checks that both input files exist in the video file's directory
-6. Generates randomized temporary names using `%RANDOM%` to avoid path length issues (e.g. `frm_12345_v.mp4`)
-7. Renames input files to temporary names; rolls back and exits on failure
-8. Uses ffmpeg to merge video and audio streams; rolls back renames and exits on failure
-9. Renames output file to user-specified name; rolls back on failure
-10. Deletes temporary input files (with warnings if deletion fails)
-11. Copies final file to `%USERPROFILE%\Desktop` (with warning on failure) and restores directory with `popd`
+   - `%3`: Desired output file name (plain filename, must use `.mkv` extension)
+2. Validates that exactly three arguments are provided; prints usage and exits if fewer or more
+3. Rejects path separators (backslash, forward slash) and drive letters (colon) in arg3 — output name must be a plain filename
+4. Requires arg3 to use the `.mkv` extension; exits with error if not
+5. Checks that FFmpeg is installed and available in PATH; exits with a descriptive error if not
+6. Changes into the directory of the video file using `pushd`
+7. Verifies both input files reside in the same directory; exits if not
+8. Generates randomized temporary names using `%RANDOM%` with collision checking to avoid path length issues (e.g. `frm_12345_v.mp4`)
+9. Checks that both input files exist in the video file's directory
+10. Renames input files to temporary names; rolls back and exits on failure
+11. Uses ffmpeg to merge video and audio streams; rolls back renames and exits on failure
+12. Renames output file to user-specified name; rolls back on failure
+13. Deletes temporary input files (with warnings if deletion fails)
+14. Copies final file to `%USERPROFILE%\Desktop` (with warning on failure) and restores directory with `popd`
 
-**Key lines explained**:
-- Lines 10-14: Argument count validation — exits with usage message if `%3` is empty
-- Lines 16-21: FFmpeg availability check via `where` command
-- Lines 23-26: Set randomized temporary file names for video, audio, and output
-- Lines 28-32: `pushd` to the video file's directory
-- Lines 34-44: Check that both input files exist in the target directory
-- Lines 46-59: Rename inputs to temp names (with error handling and rollback)
-- Line 61: FFmpeg merge command with specific stream mapping
-- Lines 62-70: FFmpeg error handling — restores original filenames, deletes partial output
-- Line 72: Rename output to desired name
-- Lines 73-79: Output rename error handling with rollback
-- Lines 81-84: Delete temporary input files (with existence-check warnings)
-- Lines 86-91: Copy to desktop via `%USERPROFILE%\Desktop` (with error handling and success message)
-- Line 93: `popd` to restore original directory
+**Key sections explained** (referenced by script section-banner comments; line numbers are as of commit `445f858`):
+- `ARGUMENT VALIDATION` (lines 14–22): Exits with usage message if fewer than 3 args; rejects more than 3 args
+- Path-separator / drive-letter rejection (lines 24–45): Rejects backslashes, forward slashes, and colons in arg3
+- `.mkv` extension enforcement (lines 48–51): Requires arg3 to use `.mkv` extension
+- `FFMPEG AVAILABILITY CHECK` (lines 56–60): Verifies `ffmpeg` is on `PATH` via `where` before any file operations
+- `CHANGE TO INPUT DIRECTORY` (lines 66–70): `pushd` to the video file's directory
+- `INPUT DIRECTORY MATCH CHECK` (lines 79–85): Verifies both inputs share the same directory
+- `TEMPORARY FILE NAME GENERATION` / `:GENERATE_TMPNAMES` (lines 92–99): Randomized temp names with collision retry
+- `INPUT FILE EXISTENCE CHECKS` (lines 104–113): Confirms both input files exist in the target directory
+- `RENAME INPUTS TO TEMPORARY NAMES` (lines 119–133): Renames inputs with rollback on failure
+- `FFMPEG MERGE` (line 142): FFmpeg merge command with stream-copy and explicit stream mapping
+- FFmpeg error handling (lines 143–152): Restores original filenames, deletes partial output
+- `RENAME OUTPUT TO DESIRED NAME` (line 157): Renames merged file; rollback on failure (lines 158–165)
+- `CLEAN UP TEMPORARY INPUT FILES` (lines 170–173): Deletes temp inputs with existence-check warnings
+- `COPY RESULT TO DESKTOP` (lines 179–184): Copies to `%USERPROFILE%\Desktop` with error handling
+- `popd` (line 187): Restores original working directory
 
 #### README.md
 **Location**: `README.md` (repository root)
@@ -77,7 +83,7 @@ File-Merge-and-Rename/
 - **FFmpeg**: Command-line multimedia framework
   - Must be installed and accessible in system PATH
   - Used for merging video and audio streams
-  - Command format: `ffmpeg -i input1 -i input2 -c copy -map "0:v:0" -map "1:a:0" output`
+  - Command format: `ffmpeg -y -loglevel "repeat+info" -i input1 -i input2 -c copy -map "0:v:0" -map "1:a:0" output` (see "FFmpeg Command Breakdown" section for flag details)
 
 ### Platform Requirements
 - **Operating System**: Windows (batch file is Windows-specific)
@@ -115,19 +121,21 @@ File-Merge-and-Rename/
 
 ### Security Considerations
 
+> Line numbers below are as of commit `445f858`. Prefer searching for the
+> section-banner comments (e.g. `:: ── COPY RESULT TO DESKTOP`) which are
+> stable across refactors.
+
 #### Output Path
-- **Line 86**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
-- **Note**: To change the destination, edit line 86 of `File_Renamer.bat`
-- **Enhancement**: Consider accepting an optional 4th argument for a custom output directory
+- **`COPY RESULT TO DESKTOP` section (line 179)**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
+- **Note**: To change the destination, edit the `copy` command in the `COPY RESULT TO DESKTOP` section of `File_Renamer.bat`
+- **Enhancement**: Consider accepting a configurable output directory via an environment variable (a 4th positional argument would conflict with the too-many-args guard at lines 18–22)
 
 #### Input Validation
-- **Current State**: The script validates argument count (line 11), FFmpeg availability (lines 17-21), and input file existence (lines 35-44) at startup. Rename and FFmpeg operations have per-step error handling with rollback.
+- **Current State**: The script validates argument count (`ARGUMENT VALIDATION`, lines 14–22), rejects path separators and non-`.mkv` extensions in arg3 (lines 24–51), checks FFmpeg availability (`FFMPEG AVAILABILITY CHECK`, lines 56–60), verifies both inputs share the same directory (`INPUT DIRECTORY MATCH CHECK`, lines 79–85), and confirms input file existence (`INPUT FILE EXISTENCE CHECKS`, lines 104–113). Rename and FFmpeg operations have per-step error handling with rollback.
 - **Remaining Risks**:
-  - Special characters in filenames may break commands
-  - No file extension validation
+  - Special characters in filenames (e.g. `&`, `%`, `!`, `)`) may break commands
 - **Recommendations**:
-  - Validate file extensions
-  - Escape special characters
+  - Escape special characters or use `setlocal enabledelayedexpansion` for safer variable expansion
 
 #### Command Injection
 - **Risk**: Batch scripts are vulnerable to command injection via filenames
@@ -135,9 +143,9 @@ File-Merge-and-Rename/
 - **Mitigation**: Always quote variables: `"%1"` instead of `%1`
 
 #### File Cleanup
-- **Lines 81-84**: Deletes temporary input files after merge, with warnings if deletion fails
+- **`CLEAN UP TEMPORARY INPUT FILES` section (lines 170–173)**: Deletes temporary input files after merge, with warnings if deletion fails
 - **Good**: Prevents file buildup; warns user about any orphaned temp files
-- **FFmpeg failure**: If ffmpeg fails, the error handler (lines 63-70) restores original filenames and deletes partial output — no orphaned temp files remain
+- **FFmpeg failure**: If ffmpeg fails, the error handler (`FFMPEG MERGE` section, lines 143–152) restores original filenames and deletes partial output — no orphaned temp files remain
 - **Recommendation**: Temp file warnings are now in place; consider adding a cleanup mode for finding leftover `frm_*` files
 
 ## Common Tasks
@@ -165,7 +173,6 @@ Common enhancement requests might include:
 - Making output directory configurable
 - Adding progress feedback during merge
 - Supporting batch processing of multiple files
-- Validating ffmpeg installation before running
 - Adding error messages for common failures
 - Supporting drag-and-drop operation
 
@@ -200,18 +207,18 @@ ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:
 ## Potential Issues and Solutions
 
 ### Issue: Script fails on other users' systems
-**Status**: Already resolved — line 86 uses `%USERPROFILE%\Desktop`, which resolves dynamically per user
-**Enhancement**: Accept an optional 4th argument for a configurable output directory
+**Status**: Already resolved — the `COPY RESULT TO DESKTOP` section uses `%USERPROFILE%\Desktop`, which resolves dynamically per user
+**Enhancement**: Consider a configurable output directory via environment variable (a 4th positional argument would conflict with the too-many-args guard)
 
 ### Issue: Files with spaces in names
 **Cause**: Unquoted variables
 **Solution**: Quote all variable references: `RENAME "%1" abc`
 
 ### Issue: Missing FFmpeg
-**Status**: Resolved — lines 17-21 check for FFmpeg availability via `where` before any file operations
+**Status**: Resolved — the `FFMPEG AVAILABILITY CHECK` section verifies FFmpeg is on `PATH` via `where` before any file operations
 
 ### Issue: Wrong number of arguments
-**Status**: Resolved — lines 11-14 validate that all three arguments are provided before proceeding
+**Status**: Resolved — the `ARGUMENT VALIDATION` section validates that exactly three arguments are provided before proceeding
 
 ## Best Practices for AI Assistants
 
@@ -245,18 +252,17 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 
 ### Current Limitations
 1. **Fixed output directory**: Desktop destination is not configurable via arguments
-2. **Hardcoded MKV output**: Intermediate file is always `.mkv` regardless of user-specified extension
+2. **MKV-only output**: The script enforces `.mkv` as the output container — this is an intentional design choice since the merge always produces a Matroska container
 3. **No logging**: Difficult to debug failures beyond printed error messages
 4. **Platform-locked**: Windows-only solution
 5. **No special character escaping**: Filenames with `&`, `%`, `!`, etc. may break commands
 
 ### Recommended Enhancements (Priority Order)
-1. Make output directory configurable (optional 4th argument)
-2. Support different output formats beyond MKV (use `%~x3` for intermediate file extension)
-3. Create PowerShell alternative for better error handling and cross-platform support
-4. Add option to keep/delete temporary files
-5. Escape special characters in filenames
-6. Add logging to a file for debugging
+1. Make output directory configurable (via environment variable — a 4th positional argument would conflict with the too-many-args guard at `ARGUMENT VALIDATION` lines 18–22)
+2. Create PowerShell alternative for better error handling and cross-platform support
+3. Add option to keep/delete temporary files
+4. Escape special characters in filenames
+5. Add logging to a file for debugging
 
 ## Version Control Notes
 
@@ -264,6 +270,7 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 Repository contains:
 - **File_Renamer.bat**: Main Windows batch utility script for merging video/audio files
 - **README.md**: User-facing documentation with problem statement, requirements, usage examples, and alternatives
+- **REVIEW_TASKS.md**: Code review findings — resolved tasks, open bug/doc/test tasks
 - **CLAUDE.md**: Technical guide for AI assistants working with this repository
 - **LICENSE**: GNU General Public License v3.0
 
