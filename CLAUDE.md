@@ -28,7 +28,7 @@ File-Merge-and-Rename/
 ### File Descriptions
 
 #### File_Renamer.bat
-**Location**: `/home/user/File-Merge-and-Rename/File_Renamer.bat`
+**Location**: `File_Renamer.bat` (repository root)
 **Type**: Windows Batch Script
 **Purpose**: Merges video and audio files using ffmpeg
 
@@ -41,7 +41,7 @@ File-Merge-and-Rename/
 3. Uses ffmpeg to merge video and audio streams
 4. Renames output file to user-specified name
 5. Deletes temporary files
-6. Copies final file to `C:\Users\zacha\Desktop`
+6. Copies final file to `%USERPROFILE%\Desktop`
 
 **Key lines explained**:
 - Line 10-11: Rename inputs to short temporary names
@@ -51,11 +51,11 @@ File-Merge-and-Rename/
 - Line 20: Copy to desktop (hardcoded path)
 
 #### README.md
-**Location**: `/home/user/File-Merge-and-Rename/README.md`
+**Location**: `README.md` (repository root)
 **Purpose**: Full usage guide covering the problem statement, requirements (Windows + FFmpeg), command-line usage with argument descriptions and examples, step-by-step explanation of script behavior, and alternative solutions
 
 #### LICENSE
-**Location**: `/home/user/File-Merge-and-Rename/LICENSE`
+**Location**: `LICENSE` (repository root)
 **Purpose**: Full text of GNU General Public License v3.0
 
 ## Dependencies
@@ -102,10 +102,10 @@ File-Merge-and-Rename/
 
 ### Security Considerations
 
-#### Hardcoded Paths
-- **Line 20**: Desktop path is hardcoded to `C:\Users\zacha\Desktop`
-- **Risk**: Will fail on other users' systems
-- **Recommendation**: Consider making this configurable or using `%USERPROFILE%\Desktop`
+#### Output Path
+- **Line 20**: Desktop path uses `%USERPROFILE%\Desktop`, which resolves to the current user's desktop on any Windows system
+- **Note**: To change the destination, edit line 20 of `File_Renamer.bat`
+- **Enhancement**: Consider accepting an optional 4th argument for a custom output directory
 
 #### Input Validation
 - **Current State**: No input validation on arguments
