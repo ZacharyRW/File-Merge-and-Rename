@@ -20,11 +20,12 @@ File_Renamer.bat <video_file> <audio_file> <output_name>
 ```
 
 **Arguments:**
+
 | Argument | Description |
 |---|---|
-| `video_file` | Name of the video file (with extension) |
-| `audio_file` | Name of the audio file (with extension) |
-| `output_name` | Desired name for the merged output file (with extension) |
+| `video_file` | Name of the input video file (with extension) |
+| `audio_file` | Name of the input audio file (with extension) |
+| `output_name` | Desired name for the merged output file — **must use a `.mkv` extension**. The script produces an intermediate `ghi.mkv` and renames it to this value; using a non-`.mkv` extension (e.g. `.mp4`) will produce a file with MKV internals but an incorrect extension. |
 
 **Example:**
 ```batch
@@ -37,9 +38,9 @@ File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 2. Merges them using FFmpeg (stream copy — no re-encoding, fast and lossless)
 3. Renames the output to your specified name
 4. Deletes the temporary files
-5. Copies the final file to `C:\Users\zacha\Desktop`
+5. Copies the final file to `C:\Users\<username>\Desktop`
 
-> **Note:** The desktop copy path is hardcoded. Edit line 20 of the script to change the destination, or use `%USERPROFILE%\Desktop` for portability across user accounts.
+> **Note:** The desktop copy path is hardcoded to a specific user account. Edit line 20 of the script and replace the path with `%USERPROFILE%\Desktop` for portability across user accounts.
 
 ## Alternative Solutions
 

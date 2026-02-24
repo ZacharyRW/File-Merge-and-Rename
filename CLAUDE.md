@@ -52,7 +52,7 @@ File-Merge-and-Rename/
 
 #### README.md
 **Location**: `/home/user/File-Merge-and-Rename/README.md`
-**Purpose**: Minimal project description for repository visitors
+**Purpose**: Full usage guide covering the problem statement, requirements (Windows + FFmpeg), command-line usage with argument descriptions and examples, step-by-step explanation of script behavior, and alternative solutions
 
 #### LICENSE
 **Location**: `/home/user/File-Merge-and-Rename/LICENSE`
