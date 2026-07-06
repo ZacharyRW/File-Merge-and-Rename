@@ -107,8 +107,17 @@ The script requires a Windows environment. A **PowerShell test harness with a mo
 
 ### Mock FFmpeg Stub
 
+`File_Renamer.bat` locates ffmpeg with `where ffmpeg`, which does a basename+`PATHEXT`
+lookup for the literal name `ffmpeg` — it will not find a file named
+`ffmpeg_success.bat` or `ffmpeg_fail.bat` even if that file's directory is on `PATH`.
+Keep the two variants below as source fixtures, but **deploy the one a given test
+needs by copying it to `ffmpeg.bat`** in the mocks directory before invoking
+`File_Renamer.bat` (e.g. `Copy-Item mocks\ffmpeg_success.bat mocks\ffmpeg.bat -Force`
+in the PowerShell harness) — that copy step is what actually makes `where ffmpeg`
+resolve to the mock.
+
 ```batch
-:: ffmpeg_success.bat — simulates successful merge by creating the output file
+:: ffmpeg_success.bat — simulates successful merge; copy to ffmpeg.bat before use
 @echo off
 :: File_Renamer.bat invokes ffmpeg as:
 ::   ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
@@ -122,7 +131,7 @@ exit /b 0
 ```
 
 ```batch
-:: ffmpeg_fail.bat — simulates a failed merge
+:: ffmpeg_fail.bat — simulates a failed merge; copy to ffmpeg.bat before use
 @echo off
 exit /b 1
 ```
