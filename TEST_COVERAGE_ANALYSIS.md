@@ -110,9 +110,14 @@ The script requires a Windows environment. A **PowerShell test harness with a mo
 ```batch
 :: ffmpeg_success.bat — simulates successful merge by creating the output file
 @echo off
-:: Parse the output filename from the argument list (last non-flag argument)
-:: For test simplicity, accept a fixed known output name via environment variable
-copy NUL "%MOCK_OUTPUT%" >nul
+:: File_Renamer.bat invokes ffmpeg as:
+::   ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
+:: The output path is always the LAST argument on the command line (there is
+:: no fixed/known name to rely on — TMPOUT is a randomized temp name), so
+:: walk %* and keep the final token rather than reading an env var.
+set "OUTPUT_PATH="
+for %%A in (%*) do set "OUTPUT_PATH=%%~A"
+copy NUL "%OUTPUT_PATH%" >nul
 exit /b 0
 ```
 
@@ -147,6 +152,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Add mock ffmpeg to PATH
+        shell: pwsh
+        run: |
+          # File_Renamer.bat runs `where ffmpeg` to check availability, so the
+          # mock stub directory must be on PATH before the tests run. Writing
+          # to $env:GITHUB_PATH persists the change to all subsequent steps.
+          echo "${{ github.workspace }}\tests\mocks" | Out-File -FilePath $env:GITHUB_PATH -Append
       - name: Run tests
         shell: pwsh
         run: .\tests\Run-Tests.ps1
