@@ -93,7 +93,7 @@ File-Merge-and-Rename/
 
 ### Git Branch Information
 - **Development Branch**: Varies per session (uses `claude/*` branch naming convention)
-- **Main Branch**: `master`
+- **Main Branch**: `main`
 
 ### Making Changes
 1. Develop on the specified claude/* branch
