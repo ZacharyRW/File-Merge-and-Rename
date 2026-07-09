@@ -5,6 +5,8 @@
 
 #Requires -Version 7.0
 
+$implementations = @("Batch", "PowerShell")
+
 BeforeAll {
     $script:RepoRoot = $PSScriptRoot
     $script:BatchScript = Join-Path $script:RepoRoot "File_Renamer.bat"
@@ -146,10 +148,6 @@ exit /b $ExitCode
 }
 
 Describe "File merge scripts" -Skip:(-not $IsWindows) {
-    BeforeAll {
-        $implementations = @("Batch", "PowerShell")
-    }
-
     Context "Argument and output-name validation" {
         It "<_> rejects too few arguments before file operations" -ForEach $implementations {
             $workspace = New-TestWorkspace

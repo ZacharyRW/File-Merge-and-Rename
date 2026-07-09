@@ -8,10 +8,13 @@ jobs:
   pester:
     name: Pester on Windows
     runs-on: windows-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install Pester
         shell: pwsh
@@ -22,3 +25,4 @@ jobs:
         shell: pwsh
         run: |
           Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed
+          exit $LASTEXITCODE
