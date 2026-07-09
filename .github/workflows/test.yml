@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pester:
+    name: Pester on Windows
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99 -Force -SkipPublisherCheck -Scope CurrentUser
+
+      - name: Run mock-FFmpeg test suite
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed
+          exit $LASTEXITCODE

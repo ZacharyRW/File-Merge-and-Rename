@@ -10,6 +10,7 @@ YouTube-DL sometimes downloads video and audio as separate files and merges them
 
 - **Windows** (batch script, Windows-only)
 - **FFmpeg** installed and available in system PATH
+- **PowerShell 7+** if using the PowerShell port or running the Pester test suite
 
 ## Usage
 
@@ -32,6 +33,14 @@ File_Renamer.bat <video_file> <audio_file> <output_name>
 File_Renamer.bat video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
 ```
 
+PowerShell alternative:
+
+```powershell
+.\File_Renamer.ps1 video.f137.mp4 audio.f140.m4a "My Final Video.mkv"
+```
+
+The PowerShell port intentionally follows the batch script's current behavior: exactly three positional arguments, a plain `.mkv` output filename, same-directory inputs, short temporary renames, rollback on merge failures, and a warning-only Desktop copy.
+
 ## What It Does
 
 1. Validates that exactly three arguments are provided (prints usage and exits if fewer or more)
@@ -51,9 +60,15 @@ If any rename or FFmpeg step fails, the script rolls back all file renames and e
 
 ## Testing and CI
 
-> **Prerequisites:** All tests require a **Windows environment** (Command Prompt, PowerShell, or a GitHub Actions `windows-latest` runner) plus either a real FFmpeg installation or a **mocked `ffmpeg` binary** placed earlier on `PATH` than any real binary. The script cannot be meaningfully tested on Linux or macOS without a Windows compatibility layer.
+> **Prerequisites:** The default automated suite requires a **Windows environment** and PowerShell 7+. It uses a mocked `ffmpeg.bat` binary placed earlier on `PATH` than any real binary. The scripts cannot be meaningfully tested on Linux or macOS without a Windows compatibility layer.
 
-There are currently no automated tests in the repository. See `REVIEW_TASKS.md` (Tasks 9 and 10) for the full proposed CI plan. The sections below provide enough detail to implement a basic Windows CI job.
+Run the default Pester suite from the repository root:
+
+```powershell
+pwsh -NoProfile -Command "Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed"
+```
+
+GitHub Actions runs the same suite on `windows-latest` via `.github/workflows/test.yml` with Pester 5.x.
 
 ### Mocking FFmpeg
 
@@ -77,7 +92,7 @@ exit /b 0
 exit /b 1
 ```
 
-### Test Scenarios
+### Covered Test Scenarios
 
 | Scenario | Setup | Expected exit code |
 |---|---|---|
@@ -89,7 +104,8 @@ exit /b 1
 | FFmpeg failure | Failure stub | non-zero |
 | Output name contains path separator | e.g. `C:\out\file.mkv` as arg3 | `1` |
 | Non-`.mkv` output extension | e.g. `output.mp4` as arg3 | `1` |
-| Desktop copy fails | Read-only Desktop or missing folder | `0` (warning printed) |
+| Output rename conflict | Pre-existing final output file | `1` with input rollback |
+| Desktop copy succeeds | Mock merge with writable Desktop | `0` |
 
 ### Extension Mismatch
 

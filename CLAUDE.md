@@ -83,7 +83,7 @@ File-Merge-and-Rename/
 - **FFmpeg**: Command-line multimedia framework
   - Must be installed and accessible in system PATH
   - Used for merging video and audio streams
-  - Command format: `ffmpeg -y -loglevel "repeat+info" -i input1 -i input2 -c copy -map "0:v:0" -map "1:a:0" output` (see "FFmpeg Command Breakdown" section for flag details)
+  - Command format: `call ffmpeg -y -loglevel "repeat+info" -i input1 -i input2 -c copy -map "0:v:0" -map "1:a:0" output` (see "FFmpeg Command Breakdown" section for flag details)
 
 ### Platform Requirements
 - **Operating System**: Windows (batch file is Windows-specific)
@@ -192,10 +192,11 @@ When updating documentation:
 ## FFmpeg Command Breakdown
 
 ```batch
-ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
+call ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 ```
 
 **Flags explained**:
+- `call`: Ensures control returns to this script when tests or local PATH shims resolve `ffmpeg` to a `.bat`/`.cmd` file
 - `-y`: Overwrite output file without prompting
 - `-loglevel "repeat+info"`: Set logging verbosity
 - `-i "%TMPVID%"`: First input (randomized temp video file)

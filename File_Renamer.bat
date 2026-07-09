@@ -139,7 +139,7 @@ IF ERRORLEVEL 1 (
 :: -map "0:v:0"    Take the first video stream from the first input file.
 :: -map "1:a:0"    Take the first audio stream from the second input file.
 :: The output container is Matroska (MKV); the script requires arg3 to use the .mkv extension and will fail otherwise.
-ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
+call ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 SET "FFERR=%ERRORLEVEL%"
 IF %FFERR% NEQ 0 (
     :: Merge failed — delete any partial output and restore original filenames.
