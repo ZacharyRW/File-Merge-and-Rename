@@ -7,11 +7,13 @@
 
 ## Current State
 
-The repository has **no automated tests**. Every execution path in `File_Renamer.bat` is validated only by manual runs. This is already tracked as Tasks 9 and 10 in `REVIEW_TASKS.md`; this document expands on those tasks with a complete path-by-path breakdown and recommended test harness approach.
+The repository now has a Windows Pester suite in `File_Renamer.Tests.ps1` and a GitHub Actions workflow in `.github/workflows/test.yml`. The default suite uses a mock `ffmpeg.bat` placed earlier on `PATH` and exercises both `File_Renamer.bat` and the reconciled PowerShell port, `File_Renamer.ps1`.
+
+`File_Renamer.Integration.Tests.ps1` contains an opt-in real-FFmpeg smoke test, gated by `RUN_REAL_FFMPEG_TESTS=1`, so normal CI does not depend on a real FFmpeg installation.
 
 ---
 
-## Untested Code Paths
+## Covered and Remaining Code Paths
 
 ### 1. Argument Validation (lines 14–51)
 
@@ -150,27 +152,25 @@ exit /b 1
 
 ### GitHub Actions Integration
 
-A `windows-latest` runner can execute the test harness without additional setup:
+A `windows-latest` runner executes the default mock-FFmpeg suite:
 
 ```yaml
 # .github/workflows/test.yml
 name: Test
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 jobs:
-  test:
+  pester:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Add mock ffmpeg to PATH
+      - name: Install Pester
         shell: pwsh
-        run: |
-          # File_Renamer.bat runs `where ffmpeg` to check availability, so the
-          # mock stub directory must be on PATH before the tests run. Writing
-          # to $env:GITHUB_PATH persists the change to all subsequent steps.
-          echo "${{ github.workspace }}\tests\mocks" | Out-File -FilePath $env:GITHUB_PATH -Append
-      - name: Run tests
+        run: Install-Module -Name Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99 -Force -SkipPublisherCheck -Scope CurrentUser
+      - name: Run mock-FFmpeg test suite
         shell: pwsh
-        run: .\tests\Run-Tests.ps1
+        run: Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed
 ```
 
 ---
@@ -179,6 +179,6 @@ jobs:
 
 | Task # | Summary | This Document |
 |---|---|---|
-| 9 | Add automated CI tests | Expanded with full path inventory and harness design |
-| 10 | Extension validation test case | Covered under Argument Validation scenario 8 above |
+| 9 | Add automated CI tests | Implemented with `.github/workflows/test.yml` and `File_Renamer.Tests.ps1` |
+| 10 | Extension validation test case | Implemented for both batch and PowerShell scripts |
 | 11 | Missing `exit /b 0` on success path | Covered under "Success Path Exit Code" section above |

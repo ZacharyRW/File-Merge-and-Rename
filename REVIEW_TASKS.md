@@ -7,10 +7,9 @@
 
 ## Previously Identified Tasks — Status Update
 
-Tasks 1–8 from the original review have been **fully resolved** in prior commits.
-Tasks 9–10 (automated testing) remain **open** and are carried forward with their
-original numbers so that existing references (e.g. README.md "Tasks 9 and 10")
-stay valid.
+Tasks 1–10 from the original review have been **fully resolved**.
+Task 18 has also been resolved by salvaging the useful pieces from the stale
+PowerShell/Pester branch against current `main`.
 
 | Original # | Summary | Status |
 |---|---|---|
@@ -22,34 +21,13 @@ stay valid.
 | 6 | Desktop copy error handling | **Resolved** — `COPY RESULT TO DESKTOP` section, lines 179–184 |
 | 7 | Header comment typo and MKV docs | **Resolved** — header comments lines 1–6, .mkv guard lines 46–51 |
 | 8 | README rollback semantics for desktop copy | **Resolved** — README line 47 |
+| 9 | Add automated CI tests | **Resolved** — `.github/workflows/test.yml`, `File_Renamer.Tests.ps1` |
+| 10 | Extension validation test | **Resolved** — non-`.mkv` rejection is covered for both implementations |
+| 18 | Salvage PowerShell port + Pester suite | **Resolved** — `File_Renamer.ps1`, Pester tests, fixtures, and CI |
 
 ---
 
-## Open Tasks
-
-### Task 9 — Test Improvement: Add automated CI tests
-
-**Description:** The repository has no automated tests. All control-flow paths (success, missing args, too many args, missing ffmpeg, missing input files, ffmpeg failure, rename failure, desktop copy failure, path-in-output rejection, non-.mkv rejection) are untested.
-
-**Location:** Repository-wide.
-
-**Proposed Fix:** Add a Windows CI job (GitHub Actions `windows-latest`) with a PowerShell/Pester or batch test harness using mocked `ffmpeg.bat` stubs. See the README "Testing and CI" section for mock stubs and test scenarios.
-
-**Reasoning:** The script manipulates user files with renames and deletes. Regressions can cause data loss. Automated tests prevent this.
-
----
-
-### Task 10 — Test Improvement: Extension validation test
-
-**Description:** The .mkv extension is now enforced (`ARGUMENT VALIDATION` section, lines 48–51), but no automated test validates this rejection behavior.
-
-**Location:** `File_Renamer.bat`, `ARGUMENT VALIDATION` section, lines 48–51.
-
-**Proposed Fix:** Add a test case that calls the script with a non-`.mkv` output name (e.g., `output.mp4`) and asserts exit code `1` with no file operations performed.
-
-**Reasoning:** Ensures the extension guard is not accidentally removed in future refactors.
-
----
+## Remaining Open Tasks
 
 ### Task 11 — Bug Fix: Missing explicit exit code on success path
 
@@ -151,32 +129,14 @@ IF %_RETRIES% GTR 100 (
 
 ---
 
-### Task 18 — Test Improvement: Salvage the unmerged PowerShell port + Pester test suite
-
-**Source:** unmerged branch `claude/testing-mi6sok5c2ldk59bv-01SxiwULUDd3Z3FLU765H9TM` (last commit 2025-11-20; ~2,535 lines across 7 files, now 33 commits behind `main`).
-
-That branch already built most of what Tasks 9 and 10 ask for, but it never merged and has since gone stale. Rather than rebase the whole branch, salvage the still-relevant pieces against current `main`:
-
-- **`File_Renamer.ps1`** (~282 lines) — a PowerShell port of the batch script with structured error handling. Directly serves the long-standing "Create PowerShell alternative" enhancement. **Caveat:** written against the Nov-2025 script, so it must be re-reconciled with the current `File_Renamer.bat` (same-directory check, `.mkv` guard, collision-retry loop, path-separator rejection) before it can be trusted.
-- **`File_Renamer.Tests.ps1`** (~850 lines) + **`File_Renamer.Integration.Tests.ps1`** (~406 lines) — Pester unit + integration coverage. This is the concrete harness Task 9 (CI tests) and Task 10 (extension-validation test) call for. Needs a mock `ffmpeg` stub; the branch's `tests/fixtures/Create-TestFixtures.ps1` supplies fixtures.
-- **`TEST_COVERAGE.md`** (~538 lines) — a path-by-path coverage doc that overlaps with the `TEST_COVERAGE_ANALYSIS.md` now in `main`; reconcile the two rather than keeping both.
-- **CI:** wire the Pester suite into a GitHub Actions `windows-latest` workflow (closes Task 9).
-
-**Recommendation:** treat the branch as a reference / cherry-pick source, not a merge candidate. Port `File_Renamer.ps1` and the Pester tests forward against current `main`, reconcile the two coverage docs, then the branch can be safely deleted.
-
----
-
 ## Summary
 
 | Priority | Task # | Type | Summary |
 |---|---|---|---|
-| High | 9 | Test Improvement | Add automated CI tests |
 | High | 12 | Documentation | CLAUDE.md "How it works" missing validation steps |
 | High | 13 | Documentation | CLAUDE.md enhancement suggestions contradict code |
-| Medium | 10 | Test Improvement | Extension validation test case |
 | Medium | 11 | Bug Fix | Missing `exit /b 0` on success path |
 | Medium | 14 | Documentation | CLAUDE.md lists implemented feature as enhancement |
 | Medium | 15 | Documentation | CLAUDE.md frames design choice as limitation |
 | Low | 16 | Bug Fix | Poison-character edge case in directory-match check |
 | Low | 17 | Bug Fix | Unbounded temp-name retry loop |
-| Medium | 18 | Test Improvement | Salvage unmerged PowerShell port + Pester suite (branch `claude/testing-…`) |
