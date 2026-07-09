@@ -122,7 +122,7 @@ resolve to the mock.
 :: ffmpeg_success.bat — simulates successful merge; copy to ffmpeg.bat before use
 @echo off
 :: File_Renamer.bat invokes ffmpeg as:
-::   ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
+::   call ffmpeg -y -loglevel "repeat+info" -i "%TMPVID%" -i "%TMPAUD%" -c copy -map "0:v:0" -map "1:a:0" "%TMPOUT%"
 :: The output path is always the LAST argument on the command line (there is
 :: no fixed/known name to rely on — TMPOUT is a randomized temp name), so
 :: walk %* and keep the final token rather than reading an env var.
