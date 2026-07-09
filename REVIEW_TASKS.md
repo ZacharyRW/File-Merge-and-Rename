@@ -151,6 +151,21 @@ IF %_RETRIES% GTR 100 (
 
 ---
 
+### Task 18 — Test Improvement: Salvage the unmerged PowerShell port + Pester test suite
+
+**Source:** unmerged branch `claude/testing-mi6sok5c2ldk59bv-01SxiwULUDd3Z3FLU765H9TM` (last commit 2025-11-20; ~2,535 lines across 7 files, now 33 commits behind `main`).
+
+That branch already built most of what Tasks 9 and 10 ask for, but it never merged and has since gone stale. Rather than rebase the whole branch, salvage the still-relevant pieces against current `main`:
+
+- **`File_Renamer.ps1`** (~282 lines) — a PowerShell port of the batch script with structured error handling. Directly serves the long-standing "Create PowerShell alternative" enhancement. **Caveat:** written against the Nov-2025 script, so it must be re-reconciled with the current `File_Renamer.bat` (same-directory check, `.mkv` guard, collision-retry loop, path-separator rejection) before it can be trusted.
+- **`File_Renamer.Tests.ps1`** (~850 lines) + **`File_Renamer.Integration.Tests.ps1`** (~406 lines) — Pester unit + integration coverage. This is the concrete harness Task 9 (CI tests) and Task 10 (extension-validation test) call for. Needs a mock `ffmpeg` stub; the branch's `tests/fixtures/Create-TestFixtures.ps1` supplies fixtures.
+- **`TEST_COVERAGE.md`** (~538 lines) — a path-by-path coverage doc that overlaps with the `TEST_COVERAGE_ANALYSIS.md` now in `main`; reconcile the two rather than keeping both.
+- **CI:** wire the Pester suite into a GitHub Actions `windows-latest` workflow (closes Task 9).
+
+**Recommendation:** treat the branch as a reference / cherry-pick source, not a merge candidate. Port `File_Renamer.ps1` and the Pester tests forward against current `main`, reconcile the two coverage docs, then the branch can be safely deleted.
+
+---
+
 ## Summary
 
 | Priority | Task # | Type | Summary |
@@ -164,3 +179,4 @@ IF %_RETRIES% GTR 100 (
 | Medium | 15 | Documentation | CLAUDE.md frames design choice as limitation |
 | Low | 16 | Bug Fix | Poison-character edge case in directory-match check |
 | Low | 17 | Bug Fix | Unbounded temp-name retry loop |
+| Medium | 18 | Test Improvement | Salvage unmerged PowerShell port + Pester suite (branch `claude/testing-…`) |
