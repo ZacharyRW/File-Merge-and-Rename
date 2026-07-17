@@ -1,7 +1,7 @@
 # Project Roadmap
 
 Roadmap date: 2026-07-13
-Source of truth: verified findings in [ANALYSIS.md](ANALYSIS.md). Historical audit documents are evidence, not this roadmap’s backlog.
+Source of truth: verified findings in [ANALYSIS.md](ANALYSIS.md). Superseded review documents were reconciled and removed on 2026-07-16; Git history preserves their evidence.
 
 ## Roadmap Principles
 
@@ -10,7 +10,8 @@ Prioritize work by user data safety, whether the defect can hide a regression, o
 ## Phase 0: Immediate Safety and Repository Hygiene
 
 1. **GH-001 — Decide intentional GitHub governance.** `main` is currently unprotected with no rulesets. Decide whether to require the verified Windows Pester check before merge; do not change remote settings without separate approval.
-2. **DOC-001 — Establish canonical planning.** Keep this `ROADMAP.md` and `ANALYSIS.md` as the current planning pair. Clearly label `AUDIT.md`, `CODE_REVIEW.md`, `REVIEW_TASKS.md`, and `TEST_COVERAGE_ANALYSIS.md` historical before moving/archiving them.
+
+Completed during the 2026-07-16 cleanup: `ANALYSIS.md` and `ROADMAP.md` are the only planning pair; the four superseded review documents were removed after verification, and `AGENTS.md` replaced the stale duplicated agent guidance.
 
 There are no confirmed exposed secrets, broken local build artifacts, or branches safe to delete now.
 
@@ -20,7 +21,7 @@ There are no confirmed exposed secrets, broken local build artifacts, or branche
 2. **BUG-002 — Make batch rollback observable and contained.** Add `setlocal`, immediately capture `where` status, warn on failed restore renames, and include an absolute path for retained temporary output.
 3. **BUG-003 — Bound batch temporary-name generation.** Use a defined retry budget matching the PowerShell behavior and return an actionable error.
 4. **SEC-001 — Define and implement safe batch filename policy.** Prefer a PowerShell recommendation for unusual names; either robustly refactor cmd comparisons or explicitly reject dangerous metacharacters. Verify the chosen policy in isolated Windows tests.
-5. **TEST-002 — Cover failure paths.** Add deterministic cases for second rename failure, failed rollback, missing/occupied Desktop, collision exhaustion, and special-character policy. Add a batch real-FFmpeg smoke test when feasible.
+5. **TEST-002 — Cover failure paths and missing validation variants.** Add deterministic cases for zero/one arguments, colon/forward-slash output names, missing video/input directory, bare relative-audio resolution, second rename failure, failed rollback, missing/occupied Desktop, collision exhaustion, and special-character policy. Add a batch real-FFmpeg smoke test when feasible.
 6. **DOC-002 — Correct user-facing drift.** Make temp extension examples generic, state exact mock failure semantics, and align test documentation with the repaired workflow.
 
 ## Phase 2: Maintainability and Developer Experience
@@ -66,11 +67,10 @@ There are no confirmed exposed secrets, broken local build artifacts, or branche
 ## Documentation Plan
 
 1. Keep `ANALYSIS.md` and `ROADMAP.md` as the current audit/planning pair.
-2. Add historical banners to existing review documents, or move them unchanged to `docs/archive/` in a dedicated documentation-only commit.
-3. Replace the long stale portions of `CLAUDE.md` with current repository structure, implementation policy, validation commands, and canonical-document links.
-4. Update README and `tests/README.md` after CI and batch behavior changes; include supported platforms, exact testing scope, special-character policy, and recovery caveats.
-5. Add `docs/testing.md` and `docs/architecture.md` only if the concise root documents become unwieldy.
-6. Add `SECURITY.md` after defining a contact/disclosure route; do not fabricate one.
+2. Keep `AGENTS.md` as canonical repository guidance and keep `CLAUDE.md` as a Claude-only pointer.
+3. Update README and `tests/README.md` after CI and batch behavior changes; include supported platforms, exact testing scope, special-character policy, and recovery caveats.
+4. Add `docs/testing.md` and `docs/architecture.md` only if the concise root documents become unwieldy.
+5. Add `SECURITY.md` after defining a contact/disclosure route; do not fabricate one.
 
 ## GitHub Improvement Plan
 
@@ -96,7 +96,6 @@ There are no confirmed exposed secrets, broken local build artifacts, or branche
 | ID | Initiative | Priority | Effort | Dependencies | Target phase | Success criteria |
 |---|---|---|---|---|---|---|
 | GH-001 | Decide intentional GitHub governance | P1 | S | Explicit admin authorization | 0 | `main` protection/ruleset policy is documented and, if selected, enforced. |
-| DOC-001 | Canonicalize current vs. historical documentation | P0 | S | This audit | 0 | No live tracker repeats obsolete “no tests/CI/PowerShell” claims. |
 | BUG-001 | Explicit batch success exit behavior | P1 | S | Windows test harness | 1 | Happy-path exit is 0 and tested on Windows. |
 | BUG-002 | Batch rollback containment/reporting | P1 | M | Windows test harness | 1 | Failed restores warn clearly; no caller environment leakage. |
 | BUG-003 | Bound temporary-name retries | P1 | S | Windows tests | 1 | Collision exhaustion exits predictably without a hang. |

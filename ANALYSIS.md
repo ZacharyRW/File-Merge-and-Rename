@@ -1,6 +1,6 @@
 # Project Analysis
 
-Audit date: 2026-07-13
+Audit date: 2026-07-16
 Audited revision: `c1d423f` (`main`, matching `origin/main` locally)
 Scope: tracked repository contents, local Git metadata and history, static source review, available validation, and GitHub review.
 GitHub review updated: 2026-07-16 (authenticated read-only access)
@@ -40,13 +40,13 @@ The batch and PowerShell scripts duplicate this contract. Pester uses a temporar
 |---|---|
 | `File_Renamer.bat` | Original Windows-compatible implementation (187 lines). |
 | `File_Renamer.ps1` | PowerShell 7 implementation with strict mode, structured exception handling, literal-path operations, and a bounded name generator. |
-| `File_Renamer.Tests.ps1` | Pester mock-FFmpeg suite for batch and PowerShell behavior. |
-| `File_Renamer.Integration.Tests.ps1` | Opt-in real-FFmpeg PowerShell smoke test. |
+| `tests/File_Renamer.Tests.ps1` | Pester mock-FFmpeg suite for batch and PowerShell behavior. |
+| `tests/File_Renamer.Integration.Tests.ps1` | Opt-in real-FFmpeg PowerShell smoke test. |
 | `tests/` | Test running notes and a manual dummy-fixture generator. |
 | `.github/workflows/test.yml` | Windows GitHub Actions Pester workflow. |
 | `README.md` | User-facing use, behavior, and testing guide. |
-| `CLAUDE.md` | Long AI-maintainer guide; partly stale after the July PowerShell/test additions. |
-| `AUDIT.md`, `CODE_REVIEW.md`, `REVIEW_TASKS.md`, `TEST_COVERAGE_ANALYSIS.md` | Historical review artifacts, not a coherent current tracker. |
+| `AGENTS.md` | Canonical repository guidance for all coding agents. |
+| `CLAUDE.md` | Claude-specific pointer to `AGENTS.md`; contains no duplicated project guidance. |
 | `LICENSE` | GPL-3.0 license text. |
 
 There are 15 tracked files and no package/dependency manifest, build system, release automation, or generated artifacts.
@@ -73,7 +73,7 @@ Commands run included `git status --short --branch`, `git log`, `git branch -a -
 `.github/workflows/test.yml` runs:
 
 ```powershell
-Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed
+Invoke-Pester -Path .\tests\File_Renamer.Tests.ps1 -Output Detailed
 exit $LASTEXITCODE
 ```
 
@@ -81,7 +81,7 @@ Pester 5 documents `-CI` as enabling test-result output and exiting after a fail
 
 ## Existing Issue Verification
 
-The repository has no meaningful inline `TODO`, `FIXME`, `HACK`, `BUG`, or `XXX` markers. Its work inventory is instead spread across four review documents. “Historical” below means the source remains useful evidence but must not be used as a live backlog without this verification.
+The repository has no meaningful inline `TODO`, `FIXME`, `HACK`, `BUG`, or `XXX` markers. The four review documents below were reconciled against the code and removed on 2026-07-16; Git history preserves their provenance. “Historical” below means the source was evidence, not a live backlog.
 
 | Existing item(s) | Source | Current status | Verification | Still relevant? | Recommended action |
 |---|---|---|---|---|---|
@@ -89,8 +89,8 @@ The repository has no meaningful inline `TODO`, `FIXME`, `HACK`, `BUG`, or `XXX`
 | Task 9: automated tests and CI | `REVIEW_TASKS.md` | Already fixed | Pester suite and Windows workflow exist; authenticated Actions logs verify both a failing job and a current 20/20 passing run. | No | Preserve as historical resolved work. |
 | Task 10: extension-validation test | `REVIEW_TASKS.md` | Already fixed | Both implementations have a non-MKV Pester case. | No | Preserve as resolved. |
 | Task 11: deterministic success exit | `REVIEW_TASKS.md` | Confirmed | Batch ends at bare `popd` (line 187); its proposed `&&`/`||` fix is invalid for this purpose in cmd. | Yes | BUG-001: use explicit, tested batch exit handling. |
-| Task 12: incomplete CLAUDE behavior list | `REVIEW_TASKS.md` | Already fixed | The list includes current validations. | No | Mark historical resolved. |
-| Tasks 13–15: stale CLAUDE enhancement/limitation claims | `REVIEW_TASKS.md` | Partially confirmed | Some were corrected, but CLAUDE still says a PowerShell alternative is future work and omits current files. | Yes | DOC-001: replace/shorten stale guide sections. |
+| Task 12: incomplete CLAUDE behavior list | `REVIEW_TASKS.md` | Resolved | `AGENTS.md` now contains the current shared behavior contract; `CLAUDE.md` no longer duplicates a stale list. | No | Preserve as historical resolved work. |
+| Tasks 13–15: stale CLAUDE enhancement/limitation claims | `REVIEW_TASKS.md` | Resolved 2026-07-16 | Canonical guidance moved to `AGENTS.md`; `CLAUDE.md` contains Claude-only notes. | No | Preserve as historical resolved work. |
 | Task 16 / SEC-1: batch metacharacter path hazard | `REVIEW_TASKS.md`, `AUDIT.md` | Confirmed risk | Batch expands path values in parenthesized `IF` blocks; documented `)`, `%`, `!`, and related cmd parsing hazards remain. | Yes | SEC-001: harden/restrict batch path handling and add Windows cases. |
 | Task 17: unbounded `%RANDOM%` loop | `REVIEW_TASKS.md` | Confirmed | Lines 92–99 loop indefinitely on collisions; PowerShell already bounds its generator at 100 attempts. | Yes | BUG-003. |
 | Findings 1, 3, 5: rollback invariant/reporting | `CODE_REVIEW.md` | Confirmed | Batch rollback renames have no warning checks; final-rename error omits absolute temporary-output location. | Yes | BUG-002. |
@@ -99,13 +99,13 @@ The repository has no meaningful inline `TODO`, `FIXME`, `HACK`, `BUG`, or `XXX`
 | Finding 6: Task 11’s proposed syntax | `CODE_REVIEW.md` | Confirmed | The erroneous historical proposal remains in `REVIEW_TASKS.md`. | Yes | Archive/correct it when consolidating docs. |
 | Finding 7: relative audio-path caveat | `CODE_REVIEW.md` | Mostly fixed | Batch comment now explicitly limits its guarantee to bare audio filenames; README requests names in the working directory. | No material defect | Preserve historical note only. |
 | Finding 8: weak failure exit claim | `CODE_REVIEW.md` | Confirmed documentation drift | README says “non-zero”; the Pester mock verifies exact `23`. | Yes, low | DOC-002. |
-| Finding 9: four tasks falsely open | `CODE_REVIEW.md` | Already fixed | `REVIEW_TASKS.md` records tasks 12–15 as remaining, but task 12/14/15 are now resolved and 13 changed scope. | Yes, documentation only | Retire the old tracker. |
+| Finding 9: four tasks falsely open | `CODE_REVIEW.md` | Resolved 2026-07-16 | The misleading historical tracker was removed after its contents were reconciled. | No | Preserve as historical resolved work. |
 | Finding 10: hard-coded temp extensions in examples | `CODE_REVIEW.md` | Confirmed | README says `.mp4`/`.m4a` although code preserves input extensions. | Yes, low | DOC-002. |
 | Finding 11: pending error messages | `CODE_REVIEW.md` | Already fixed | No longer listed as a pending enhancement. | No | Preserve historical resolved note. |
 | Findings 12–13: spelling/comment precision | `CODE_REVIEW.md` | Confirmed, low | “randomised” remains; FFmpeg comment says failure occurs there although validation is earlier. | Yes | Fold into DOC-002. |
 | Finding 14: rollback-failure tests | `CODE_REVIEW.md` | Partially confirmed | Output-name conflict is tested; forced second-rename/rollback failure is not. | Yes | TEST-002. |
-| Findings 15–17: stale dates/cross-reference | `CODE_REVIEW.md` | Historical, partly obsolete | Review dates are appropriately historical, but documents lack a clear archival/current-status banner. | Yes | DOC-001. |
-| N-1: duplicated review documents | `AUDIT.md` | Confirmed | Four overlapping planning/audit documents disagree about current tests and PowerShell support. | Yes | DOC-001. |
+| Findings 15–17: stale dates/cross-reference | `CODE_REVIEW.md` | Obsolete | The historical review document was removed after reconciliation. | No | Preserve provenance in Git history. |
+| N-1: duplicated review documents | `AUDIT.md` | Resolved 2026-07-16 | The four overlapping planning/audit documents were reconciled and removed. | No | Keep `ANALYSIS.md` and `ROADMAP.md` as the only planning pair. |
 | N-3/N-8: Desktop copy UX | `AUDIT.md` | Confirmed improvement | Copy is unconditional and assumes `%USERPROFILE%\Desktop`; no opt-out or preflight. | Yes | FEAT-001. |
 | N-4: `ffmpeg -y` could overwrite temp output | `AUDIT.md` | Obsolete as defect | The temp name is checked before FFmpeg; `-y` is redundant but not a current data-loss path. | No | Do not prioritize removal without a behavior decision. |
 | N-5: `pushd` before existence check | `AUDIT.md` | Already explained | Current batch comments explain the working-directory behavior. | No | No action. |
@@ -175,19 +175,19 @@ The repository has no meaningful inline `TODO`, `FIXME`, `HACK`, `BUG`, or `XXX`
 #### TEST-002 — Data-loss-sensitive failure modes remain under-tested
 
 - **Category:** Testing
-- **Affected:** `File_Renamer.Tests.ps1`, both implementations
-- **Evidence:** Tests cover FFmpeg failure and final-output conflict, but not forced second input rename failure, locked-file rollback failure, missing Desktop, special characters, temp collision exhaustion, or batch `popd` behavior.
+- **Affected:** `tests/File_Renamer.Tests.ps1`, both implementations
+- **Evidence:** Tests cover FFmpeg failure and final-output conflict, but not forced second input rename failure, locked-file rollback failure, missing Desktop, special characters, temp collision exhaustion, batch `popd` behavior, zero/one-argument calls, colon/forward-slash output names, missing video/input directory, or bare relative-audio resolution.
 - **Impact:** The known error paths most likely to strand renamed files lack regression coverage.
 - **Recommended fix:** Add Windows-only cases for each path, keeping tests deterministic and isolated.
 - **Confidence:** High.
 
-#### DOC-001 — The planning/docs corpus is contradictory and stale
+#### DOC-001 — The planning/docs corpus was contradictory and stale
 
 - **Category:** Documentation / maintainability
-- **Affected:** `AUDIT.md`, `CODE_REVIEW.md`, `REVIEW_TASKS.md`, `TEST_COVERAGE_ANALYSIS.md`, `CLAUDE.md`
+- **Affected:** superseded review files and `CLAUDE.md`
 - **Evidence:** Older documents say there is no CI, no tests, and no PowerShell port; all now exist. `CLAUDE.md` lists only five repository files and calls a present PowerShell implementation future work.
 - **Impact:** A maintainer can prioritize already-complete work or overlook the actual CI defect.
-- **Recommended fix:** Make this analysis and roadmap canonical; move legacy reviews under `docs/archive/` with an explicit historical banner or retain them in place with that banner; simplify `CLAUDE.md`.
+- **Recommended fix:** **Completed 2026-07-16.** `ANALYSIS.md` and `ROADMAP.md` are canonical; superseded reviews were removed after reconciliation, and `AGENTS.md` is now the canonical agent guide.
 - **Confidence:** High.
 
 #### DOC-002 — Small README/script documentation mismatches
@@ -236,7 +236,7 @@ Keep batch as the compatibility entry point while declaring PowerShell the prefe
 
 ## Test and Quality Assessment
 
-The default Pester suite contains 16 test invocations (eight scenarios for each implementation) and covers argument count, output path validation, non-MKV rejection, missing FFmpeg, different directories, missing audio, FFmpeg failure/error-code propagation, output conflict, happy path, temporary cleanup, and Desktop copy. The integration suite has one opt-in real-FFmpeg PowerShell test.
+The default Pester suite contains 20 test invocations (10 scenarios for each implementation) and covers argument count, output path validation, non-MKV rejection, missing FFmpeg, different directories, missing audio, FFmpeg failure/error-code propagation, output conflict, happy path, temporary cleanup, and Desktop copy. The integration suite has one opt-in real-FFmpeg PowerShell test.
 
 This is meaningful behavioral coverage, but no coverage percentage is measured; prior 92%/96% claims in dangling historical work are not applicable to `main`. The biggest gaps are locked/failed rollback operations, special characters, batch-only exit and parser behavior, missing or occupied Desktop targets, collision exhaustion, and real media behavior for the batch path. CI must be fixed before its current passing status is trusted.
 
@@ -262,18 +262,16 @@ The primary operation is FFmpeg stream copy and therefore I/O-bound. The wrapper
 | Document | Status | Problems | Recommended action |
 |---|---|---|---|
 | `README.md` | Mostly accurate | Does not clearly distinguish supported batch platform from PowerShell portability; a few example/exit-code details drift. | Update. |
-| `CLAUDE.md` | Outdated and overlong | Omits PowerShell/tests/current docs from structure, says PowerShell is future work, has stale state/date, and mixes instructions with historical review. | Replace or substantially shorten. |
-| `AUDIT.md` | Historical | Claims no tests/CI/PowerShell; overlaps other reviews. | Archive with banner; do not delete. |
-| `CODE_REVIEW.md` | Historical evidence | Several findings are resolved; duplicates tracker content. | Archive with banner; retain provenance. |
-| `REVIEW_TASKS.md` | Historical, misleading as live work | Open list includes resolved items and an invalid cmd proposal. | Supersede with `ROADMAP.md`; archive with banner. |
-| `TEST_COVERAGE_ANALYSIS.md` | Historical | “No test exists” claims contradicted by current Pester tests. | Archive with banner or replace with a current concise test matrix. |
+| `AGENTS.md` | Current | Canonical project guidance for all coding agents. | Keep current with behavior/test contract changes. |
+| `CLAUDE.md` | Current, minimal | Points Claude sessions to the canonical guide without duplicating it. | Keep Claude-specific only. |
+| `AUDIT.md`, `CODE_REVIEW.md`, `REVIEW_TASKS.md`, `TEST_COVERAGE_ANALYSIS.md` | Removed 2026-07-16 | Conflicting historical snapshots; findings were reconciled into this analysis and roadmap. | Preserve provenance in Git history; do not recreate a parallel tracker. |
 | `tests/README.md` | Accurate | Does not state CI mode/result artifact expectations. | Update after CI fix. |
 | `LICENSE` | Accurate | None. | Keep. |
 | `CONTRIBUTING.md` | Missing | Optional for a small public utility. | Create only if outside contributors are invited. |
 | `SECURITY.md` | Missing | No disclosure route. | Create a short policy if the repository is public. |
 | `CHANGELOG.md` | Missing | Git history is currently adequate. | Do not create until releases/versioning begin. |
 
-Recommended structure: root `README.md`, `LICENSE`, `CONTRIBUTING.md`/`SECURITY.md` only if adopted; `docs/architecture.md`, `docs/testing.md`, and `docs/archive/` for dated reviews. Keep `ANALYSIS.md` and `ROADMAP.md` at root while actively used, then archive future snapshots rather than multiplying trackers.
+Recommended structure: root `README.md`, `AGENTS.md`, `CLAUDE.md`, `LICENSE`, `CONTRIBUTING.md`/`SECURITY.md` only if adopted; `tests/` for all automated tests and fixtures; and `docs/architecture.md` or `docs/testing.md` only when concise root documentation is no longer sufficient. Keep `ANALYSIS.md` and `ROADMAP.md` at root while actively used; use Git history rather than parallel dated trackers for retired findings.
 
 ## GitHub Repository Assessment
 
