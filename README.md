@@ -65,7 +65,7 @@ If any rename or FFmpeg step fails, the script rolls back all file renames and e
 Run the default Pester suite from the repository root:
 
 ```powershell
-pwsh -NoProfile -Command "Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed"
+pwsh -NoProfile -Command "Invoke-Pester -Path .\tests\File_Renamer.Tests.ps1 -Output Detailed"
 ```
 
 GitHub Actions runs the same suite on `windows-latest` via `.github/workflows/test.yml` with Pester 5.x.
@@ -92,20 +92,21 @@ exit /b 0
 exit /b 1
 ```
 
-### Covered Test Scenarios
+### Current Automated Coverage
 
 | Scenario | Setup | Expected exit code |
 |---|---|---|
 | Valid inputs, FFmpeg succeeds | All args valid, both files present, success stub | `0` |
 | Missing argument(s) | Fewer than 3 args | `1` |
 | FFmpeg not in PATH | No `ffmpeg` on PATH | `1` |
-| Input video file not found | Non-existent first file | `1` |
 | Input audio file not found | Non-existent second file | `1` |
-| FFmpeg failure | Failure stub | non-zero |
-| Output name contains path separator | e.g. `C:\out\file.mkv` as arg3 | `1` |
+| FFmpeg failure | Mock exits `23` | `23` (the script propagates the FFmpeg exit code) |
+| Output name contains a backslash | e.g. `nested\file.mkv` as arg3 | `1` |
 | Non-`.mkv` output extension | e.g. `output.mp4` as arg3 | `1` |
 | Output rename conflict | Pre-existing final output file | `1` with input rollback |
 | Desktop copy succeeds | Mock merge with writable Desktop | `0` |
+
+Additional validation and failure-path coverage is tracked in [ROADMAP.md](ROADMAP.md). In particular, the current suite does not yet force every parser, path-resolution, lock, rollback, or destination failure condition.
 
 ### Extension Mismatch
 

@@ -1,6 +1,6 @@
 # Test Suite
 
-The repository now has a Windows Pester suite that exercises both implementations:
+The repository has a Windows Pester suite in this directory that exercises both implementations:
 
 - `File_Renamer.bat`
 - `File_Renamer.ps1`
@@ -14,14 +14,14 @@ PowerShell port's `Get-Command ffmpeg` check both resolve the same stub.
 Run the default suite from the repository root on Windows:
 
 ```powershell
-pwsh -NoProfile -Command "Invoke-Pester -Path .\File_Renamer.Tests.ps1 -Output Detailed"
+pwsh -NoProfile -Command "Invoke-Pester -Path .\tests\File_Renamer.Tests.ps1 -Output Detailed"
 ```
 
 The real-FFmpeg integration test is opt-in:
 
 ```powershell
 $env:RUN_REAL_FFMPEG_TESTS = "1"
-pwsh -NoProfile -Command "Invoke-Pester -Path .\File_Renamer.Integration.Tests.ps1 -Tag Integration -Output Detailed"
+pwsh -NoProfile -Command "Invoke-Pester -Path .\tests\File_Renamer.Integration.Tests.ps1 -Tag Integration -Output Detailed"
 ```
 
 ## Fixtures
