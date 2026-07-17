@@ -8,7 +8,7 @@
 $implementations = @("Batch", "PowerShell")
 
 BeforeAll {
-    $script:RepoRoot = $PSScriptRoot
+    $script:RepoRoot = Split-Path -Parent $PSScriptRoot
     $script:BatchScript = Join-Path $script:RepoRoot "File_Renamer.bat"
     $script:PowerShellScript = Join-Path $script:RepoRoot "File_Renamer.ps1"
     $script:CmdExe = Join-Path $env:SystemRoot "System32\cmd.exe"

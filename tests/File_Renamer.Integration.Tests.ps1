@@ -4,13 +4,13 @@
 
 .DESCRIPTION
     These tests are skipped unless RUN_REAL_FFMPEG_TESTS=1 is set. The default
-    CI job uses the mock-FFmpeg unit suite in File_Renamer.Tests.ps1.
+    CI job uses the mock-FFmpeg unit suite in tests/File_Renamer.Tests.ps1.
 #>
 
 #Requires -Version 7.0
 
 BeforeAll {
-    $script:RepoRoot = $PSScriptRoot
+    $script:RepoRoot = Split-Path -Parent $PSScriptRoot
     $script:PowerShellScript = Join-Path $script:RepoRoot "File_Renamer.ps1"
 
     function Invoke-PowerShellRenamer {
