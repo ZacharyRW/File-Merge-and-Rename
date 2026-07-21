@@ -1,4 +1,4 @@
-# File-Merge-and-Rename
+# Media File Merge Renamer
 
 A Windows batch script utility to merge and rename video/audio files downloaded by YouTube-DL that failed to merge due to Windows PATH length limitations.
 
