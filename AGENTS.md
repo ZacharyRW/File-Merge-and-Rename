@@ -4,7 +4,7 @@ This is the canonical project guidance for every coding agent. Read it before ch
 
 ## Project and sources of truth
 
-- File-Merge-and-Rename is a local recovery utility for separate video and audio files whose normal FFmpeg merge failed because of Windows path-length constraints.
+- Media File Merge Renamer is a local recovery utility for separate video and audio files whose normal FFmpeg merge failed because of Windows path-length constraints.
 - The current implementation is `File_Renamer.bat` (Windows compatibility) and `File_Renamer.ps1` (PowerShell 7). The code and current tests outrank summaries and historical Git records.
 - `README.md` is the user-facing contract. `ANALYSIS.md` records verified audit findings; `ROADMAP.md` is the only active planning document.
 - The repository has no separate historical review tracker. Do not recreate `AUDIT.md`, `CODE_REVIEW.md`, `REVIEW_TASKS.md`, or `TEST_COVERAGE_ANALYSIS.md`; Git history retains their provenance.

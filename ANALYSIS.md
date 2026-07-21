@@ -7,7 +7,7 @@ GitHub review updated: 2026-07-16 (authenticated read-only access)
 
 ## Executive Summary
 
-File-Merge-and-Rename is a small recovery utility for failed video/audio merges caused by Windows path-length constraints. It offers a Windows batch implementation and a newer PowerShell 7 implementation; both rename inputs to short temporary names, invoke FFmpeg with stream copy, restore names on merge failure, and copy a successful result to the Desktop.
+Media File Merge Renamer is a small recovery utility for failed video/audio merges caused by Windows path-length constraints. It offers a Windows batch implementation and a newer PowerShell 7 implementation; both rename inputs to short temporary names, invoke FFmpeg with stream copy, restore names on merge failure, and copy a successful result to the Desktop.
 
 The project is healthy in its core scope: it has a narrow dependency surface, clear user documentation, a GPL-3.0 license, mock-based Pester coverage for both implementations, an opt-in real-FFmpeg smoke test, recent maintenance on `main`, and a verified passing Windows workflow. The batch implementation is the main risk concentration: its success exit code is not explicit, temporary-name retries are unbounded, rollback reporting is weak, and cmd metacharacter-bearing paths remain hazardous.
 
